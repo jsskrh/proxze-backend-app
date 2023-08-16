@@ -300,7 +300,10 @@ const updateLocation = async (req, res) => {
   console.log(req.body);
   try {
     await User.findByIdAndUpdate(req.user.id, {
-      location: { coords: [location.lng, location.lat] },
+      location: {
+        type: "Point",
+        coordinates: [location.lng, location.lat],
+      },
     });
 
     return res.status(201).json({
