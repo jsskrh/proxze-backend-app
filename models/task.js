@@ -10,11 +10,26 @@ const taskSchema = new mongoose.Schema(
     // lga: { type: String, required: true, trim: true },
     // state: { type: String, required: true, trim: true },
     // address: { type: String, required: true, trim: true },
+    // location: {
+    //   label: { type: String, required: true, trim: true },
+    //   coords: {
+    //     lat: { type: mongoose.Types.Decimal128, required: true, trim: true },
+    //     lng: { type: mongoose.Types.Decimal128, required: true, trim: true },
+    //   },
+    // },
+
     location: {
       label: { type: String, required: true, trim: true },
-      coords: {
-        lat: { type: mongoose.Types.Decimal128, required: true, trim: true },
-        lng: { type: mongoose.Types.Decimal128, required: true, trim: true },
+      geometry: {
+        type: {
+          type: String,
+          enum: ["Point"],
+          // default: "Point",
+        },
+        coordinates: {
+          type: [Number],
+          // default: [0, 0],
+        },
       },
     },
     // occupation: { type: String, required: true, trim: true },
@@ -102,5 +117,6 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+taskSchema.index({ location: { geometry: "2dsphere" } });
 const Task = mongoose.model("Task", taskSchema);
 module.exports = Task;

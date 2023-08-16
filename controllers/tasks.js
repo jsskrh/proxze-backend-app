@@ -46,7 +46,13 @@ const createTask = async (req, res) => {
       // educationLevel,
       // lga,
       // address,
-      location,
+      location: {
+        label: location.label,
+        geometry: {
+          type: "Point",
+          coordinates: [location.lng, location.lat],
+        },
+      },
       // state,
       // occupation,
       // searchRange,
@@ -252,10 +258,21 @@ const approveRejectRequest = async (req, res) => {
 
 const getTaskpool = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+    const userLocation = user.location;
+
     const tasks = await Task.find({
-      "timeline.status": "approved",
-      paymentStatus: true,
+      // "timeline.status": "approved",
+      paymentStatus: false,
       proxzi: { $exists: false },
+      location: {
+        $geoWithin: {
+          $centerSphere: [
+            [userLocation.coordinates[0], userLocation.coordinates[1]],
+            5 / 6371, // 5km radius in radians
+          ],
+        },
+      },
     }).sort({
       createdAt: -1,
     });
