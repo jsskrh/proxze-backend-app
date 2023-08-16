@@ -77,11 +77,11 @@ const creditAccount = async ({
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       // .populate("principal.reviews")
-      .populate("offers.proxzi")
+      .populate("offers.proxze")
       .session(session);
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
   } else if (purpose === "transfer") {
     task = await Task.findOneAndUpdate(
       {
@@ -99,11 +99,11 @@ const creditAccount = async ({
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       // .populate("principal.reviews")
-      .populate("offers.proxzi")
+      .populate("offers.proxze")
       .session(session);
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -116,7 +116,7 @@ const creditAccount = async ({
       [
         {
           type: "confirm",
-          recipient: task.proxzi._id,
+          recipient: task.proxze._id,
           sender: task.principal._id,
           task: task._id,
         },
@@ -128,7 +128,7 @@ const creditAccount = async ({
       [
         {
           type: "credit",
-          recipient: task.proxzi._id,
+          recipient: task.proxze._id,
           sender: task.principal._id,
           task: task._id,
           amount,
@@ -142,7 +142,7 @@ const creditAccount = async ({
       creditNotification._id,
     ];
 
-    await User.findByIdAndUpdate(task.proxzi._id, {
+    await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: { $each: notificationsToPush } },
     }).session(session);
   }

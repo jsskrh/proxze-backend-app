@@ -57,15 +57,15 @@ const taskSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    proxziReview: { type: Boolean, default: false, trim: true },
+    proxzeReview: { type: Boolean, default: false, trim: true },
     principalReview: { type: Boolean, default: false, trim: true },
-    proxzi: {
+    proxze: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
     offers: [
       {
-        proxzi: {
+        proxze: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           // required: true,
@@ -90,7 +90,7 @@ const taskSchema = new mongoose.Schema(
         ref: "Transaction",
       },
     ],
-    proxziPayment: {
+    proxzePayment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Transaction",
     },

@@ -23,11 +23,11 @@ router.put(
   auth.isAdmin,
   Tasks.approveRejectRequest
 );
-router.get("/taskpool", auth.authToken, auth.isProxzi, Tasks.getTaskpool);
+router.get("/taskpool", auth.authToken, auth.isProxze, Tasks.getTaskpool);
 router.put(
-  "/view/:taskId/proxzi/make-offer",
+  "/view/:taskId/proxze/make-offer",
   auth.authToken,
-  auth.isProxzi,
+  auth.isProxze,
   // auth.isPaid,
   auth.isTaskUnassigned,
   Tasks.makeOffer
@@ -48,12 +48,12 @@ router.put(
   auth.isPaid,
   Tasks.startTask
 );
-router.put("/view/:taskId/proxzi/upload", auth.isPaid, Tasks.uploadAttachment);
+router.put("/view/:taskId/proxze/upload", auth.isPaid, Tasks.uploadAttachment);
 router.put(
-  "/view/:taskId/proxzi/complete-task",
+  "/view/:taskId/proxze/complete-task",
   auth.authToken,
-  auth.isProxzi,
-  auth.isOwnerProxzi,
+  auth.isProxze,
+  auth.isOwnerProxze,
   auth.isPaid,
   Tasks.completeTask
 );
@@ -68,8 +68,8 @@ router.put(
 router.put(
   "/view/:taskId/stream",
   // auth.authToken,
-  // auth.isProxzi,
-  // auth.isOwnerProxzi,
+  // auth.isProxze,
+  // auth.isOwnerProxze,
   Tasks.handleLive
 );
 

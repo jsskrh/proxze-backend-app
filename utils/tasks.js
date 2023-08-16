@@ -19,7 +19,7 @@ const createTaskListObject = (task) => {
     type: task.type,
     timeline: task.timeline,
     bill: task.bill,
-    proxzi: task.proxzi && `${task.proxzi.firstName} ${task.proxzi.lastName}`,
+    proxze: task.proxze && `${task.proxze.firstName} ${task.proxze.lastName}`,
     principal: `${task.principal.firstName} ${task.principal.lastName}`,
     location: task.location,
     createdAt: task.createdAt,
@@ -47,7 +47,7 @@ const createTaskObject = (task, stream) => {
     startDate: task.startDate,
     endDate: task.endDate,
     principalReview: task.principalReview,
-    proxziReview: task.proxziReview,
+    proxzeReview: task.proxzeReview,
     principal: {
       id: task.principal._id,
       name: `${task.principal.firstName} ${task.principal.lastName}`,
@@ -55,26 +55,26 @@ const createTaskObject = (task, stream) => {
       reviews: task.principal.reviews.length,
       createdAt: task.principal.createdAt,
     },
-    proxzi: task.proxzi
+    proxze: task.proxze
       ? {
-          id: task.proxzi._id,
-          name: `${task.proxzi.firstName} ${task.proxzi.lastName}`,
-          rating: getAverageRating(task.proxzi.reviews),
-          reviews: task.proxzi.reviews.length,
-          createdAt: task.proxzi.createdAt,
+          id: task.proxze._id,
+          name: `${task.proxze.firstName} ${task.proxze.lastName}`,
+          rating: getAverageRating(task.proxze.reviews),
+          reviews: task.proxze.reviews.length,
+          createdAt: task.proxze.createdAt,
         }
       : null,
     offers: task.offers.map((offer) => {
       return {
-        proxzi: {
-          id: offer.proxzi._id,
-          avatar: offer.proxzi.avatar,
-          name: `${offer.proxzi.firstName} ${offer.proxzi.lastName}`,
-          rating: getAverageRating(offer.proxzi.reviews),
-          reviews: offer.proxzi.reviews.length,
-          occupation: offer.proxzi.occupation,
-          state: offer.proxzi.state,
-          createdAt: offer.proxzi.createdAt,
+        proxze: {
+          id: offer.proxze._id,
+          avatar: offer.proxze.avatar,
+          name: `${offer.proxze.firstName} ${offer.proxze.lastName}`,
+          rating: getAverageRating(offer.proxze.reviews),
+          reviews: offer.proxze.reviews.length,
+          occupation: offer.proxze.occupation,
+          state: offer.proxze.state,
+          createdAt: offer.proxze.createdAt,
         },
         chat: offer.chat ? offer.chat : null,
         coverLetter: offer.coverLetter,
@@ -115,26 +115,26 @@ const createAssignedTaskObject = (task) => {
       reviews: task.principal.reviews.length,
       createdAt: task.principal.createdAt,
     },
-    proxzi: task.proxzi
+    proxze: task.proxze
       ? {
-          id: task.proxzi._id,
-          name: `${task.proxzi.firstName} ${task.proxzi.lastName}`,
-          rating: getAverageRating(task.proxzi.reviews),
-          reviews: task.proxzi.reviews.length,
-          createdAt: task.proxzi.createdAt,
+          id: task.proxze._id,
+          name: `${task.proxze.firstName} ${task.proxze.lastName}`,
+          rating: getAverageRating(task.proxze.reviews),
+          reviews: task.proxze.reviews.length,
+          createdAt: task.proxze.createdAt,
         }
       : null,
     offers: task.offers.map((offer) => {
       return {
-        proxzi: {
-          id: offer.proxzi._id,
-          avatar: offer.proxzi.avatar,
-          name: `${offer.proxzi.firstName} ${offer.proxzi.lastName}`,
-          rating: getAverageRating(offer.proxzi.reviews),
-          reviews: offer.proxzi.reviews.length,
-          occupation: offer.proxzi.occupation,
-          state: offer.proxzi.state,
-          createdAt: offer.proxzi.createdAt,
+        proxze: {
+          id: offer.proxze._id,
+          avatar: offer.proxze.avatar,
+          name: `${offer.proxze.firstName} ${offer.proxze.lastName}`,
+          rating: getAverageRating(offer.proxze.reviews),
+          reviews: offer.proxze.reviews.length,
+          occupation: offer.proxze.occupation,
+          state: offer.proxze.state,
+          createdAt: offer.proxze.createdAt,
         },
         chat: offer.chat ? offer.chat : null,
         coverLetter: offer.coverLetter,

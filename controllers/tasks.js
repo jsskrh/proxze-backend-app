@@ -157,9 +157,9 @@ const getTask = async (req, res) => {
   try {
     const task = await Task.findById(taskId)
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate({
-        path: "proxzi",
+        path: "proxze",
         populate: {
           path: "reviews",
           model: "Review",
@@ -172,21 +172,21 @@ const getTask = async (req, res) => {
           model: "Review",
         },
       })
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     var stream = {};
-    await axios
-      .get(`http://localhost:8000/api/streams/live/${taskId}`)
-      .then(async (response) => {
-        stream = await response.data;
-        return;
-      })
-      .catch((err) => {
-        console.log(err);
-        return err;
-      });
+    // await axios
+    //   .get(`http://localhost:8000/api/streams/live/${taskId}`)
+    //   .then(async (response) => {
+    //     stream = await response.data;
+    //     return;
+    //   })
+    //   .catch((err) => {
+    //     console.log(err);
+    //     return err;
+    //   });
 
     return res.status(201).json({
       status: true,
@@ -229,9 +229,9 @@ const approveRejectRequest = async (req, res) => {
     )
       .populate("principal")
       // .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     const newNotification = await Message.create({
       type: req.params.type === "approved" ? "approve" : "reject",
@@ -264,7 +264,7 @@ const getTaskpool = async (req, res) => {
     const tasks = await Task.find({
       // "timeline.status": "approved",
       paymentStatus: false,
-      proxzi: { $exists: false },
+      proxze: { $exists: false },
       location: {
         $geoWithin: {
           $centerSphere: [
@@ -320,7 +320,7 @@ const makeOffer = async (req, res) => {
     }
 
     const myExistingOffer = task.offers.find(
-      (offer) => offer.proxzi.toString() === req.user.id
+      (offer) => offer.proxze.toString() === req.user.id
     );
 
     if (myExistingOffer) {
@@ -341,7 +341,7 @@ const makeOffer = async (req, res) => {
 
     // Create a new offer
     const newOffer = {
-      proxzi: req.user.id,
+      proxze: req.user.id,
       coverLetter,
       timestamp,
     };
@@ -355,9 +355,9 @@ const makeOffer = async (req, res) => {
     const populatedTask = await Task.findById(task._id)
       .populate("principal")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     const principal = await User.findById(populatedTask.principal._id);
 
@@ -422,9 +422,9 @@ const makeOffer = async (req, res) => {
 const acceptOffer = async (req, res) => {
   try {
     const task = await Task.findOneAndUpdate(
-      { _id: req.params.taskId, proxzi: { $exists: false } },
+      { _id: req.params.taskId, proxze: { $exists: false } },
       {
-        proxzi: req.body.proxzi,
+        proxze: req.body.proxze,
         $push: {
           timeline: {
             status: "assigned",
@@ -435,11 +435,11 @@ const acceptOffer = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -450,18 +450,18 @@ const acceptOffer = async (req, res) => {
 
     const newNotification = await Message.create({
       type: "assign",
-      recipient: task.proxzi._id,
+      recipient: task.proxze._id,
       sender: task.principal._id,
       task: task._id,
     });
 
-    await User.findByIdAndUpdate(task.proxzi._id, {
+    await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
     });
 
     return res.status(201).json({
       status: true,
-      message: `Proxzi has been assigned`,
+      message: `Proxze has been assigned`,
       data: createTaskObject(task),
     });
   } catch (error) {
@@ -477,7 +477,7 @@ const startTask = async (req, res) => {
     const task = await Task.findOneAndUpdate(
       {
         _id: req.params.taskId,
-        proxzi: { $exists: true },
+        proxze: { $exists: true },
       },
       {
         $push: {
@@ -490,11 +490,11 @@ const startTask = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -509,9 +509,9 @@ const startTask = async (req, res) => {
       task: task._id,
     });
 
-    const newProxziNotification = await Message.create({
+    const newProxzeNotification = await Message.create({
       type: "start",
-      recipient: task.proxzi._id,
+      recipient: task.proxze._id,
       task: task._id,
     });
 
@@ -519,8 +519,8 @@ const startTask = async (req, res) => {
       $push: { notifications: newPrincipalNotification._id },
     });
 
-    await User.findByIdAndUpdate(task.proxzi._id, {
-      $push: { notifications: newProxziNotification._id },
+    await User.findByIdAndUpdate(task.proxze._id, {
+      $push: { notifications: newProxzeNotification._id },
     });
 
     return res.status(201).json({
@@ -557,11 +557,11 @@ const uploadAttachment = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -603,11 +603,11 @@ const completeTask = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -619,7 +619,7 @@ const completeTask = async (req, res) => {
     const newNotification = await Message.create({
       type: "complete",
       recipient: task.principal._id,
-      sender: task.proxzi._id,
+      sender: task.proxze._id,
       task: task._id,
     });
 
@@ -658,11 +658,11 @@ const confirmTask = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({
@@ -673,12 +673,12 @@ const confirmTask = async (req, res) => {
 
     const newNotification = await Message.create({
       type: "confirm",
-      recipient: task.proxzi._id,
+      recipient: task.proxze._id,
       sender: task.principal._id,
       task: task._id,
     });
 
-    await User.findByIdAndUpdate(task.proxzi._id, {
+    await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
     });
 
@@ -700,26 +700,26 @@ const getOngoingTasks = async (req, res) => {
     const user = await User.findById(req.user.id);
     let tasks = [];
 
-    if (user.userType === "proxzi") {
+    if (user.userType === "proxze") {
       tasks = await Task.find({
-        proxzi: user._id,
+        proxze: user._id,
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     } else if (user.userType === "principal") {
       tasks = await Task.find({
         principal: user._id,
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     } else {
       tasks = await Task.find({
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     }
 
     const mappedTasks = tasks.map((task) => {
@@ -745,9 +745,9 @@ const getTaskHistory = async (req, res) => {
     const user = await User.findById(req.user.id);
     let tasks = [];
 
-    if (user.userType === "proxzi") {
+    if (user.userType === "proxze") {
       tasks = await Task.find({
-        proxzi: user._id,
+        proxze: user._id,
         timeline: {
           $elemMatch: {
             status: { $in: ["rejected", "confirmed"] },
@@ -755,7 +755,7 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     } else if (user.userType === "principal") {
       tasks = await Task.find({
         principal: user._id,
@@ -766,7 +766,7 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     } else {
       tasks = await Task.find({
         timeline: {
@@ -776,7 +776,7 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxzi");
+        .populate("proxze");
     }
 
     const mappedTasks = tasks.map((task) => {
@@ -802,7 +802,7 @@ const handleLive = async (req, res) => {
     const task = await Task.findOneAndUpdate(
       {
         _id: req.params.taskId,
-        proxzi: { $exists: true },
+        proxze: { $exists: true },
       },
       {
         live: req.body.type,
@@ -810,11 +810,11 @@ const handleLive = async (req, res) => {
       { new: true }
     )
       .populate("principal")
-      .populate("proxzi")
+      .populate("proxze")
       .populate("principal.reviews")
-      .populate("offers.proxzi");
+      .populate("offers.proxze");
     //.populate("attachments");
-    // .populate("offers.proxzi.reviews");
+    // .populate("offers.proxze.reviews");
 
     if (!task) {
       return res.status(404).json({

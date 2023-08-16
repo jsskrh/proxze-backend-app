@@ -83,10 +83,10 @@ async function isPrincipal(req, res, next) {
   }
 }
 
-async function isProxzi(req, res, next) {
+async function isProxze(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
-    if (user.userType === "proxzi" || user.userType === "admin") {
+    if (user.userType === "proxze" || user.userType === "admin") {
       return next();
     } else {
       return res.status(401).json({
@@ -141,11 +141,11 @@ async function isOwnerPrincipal(req, res, next) {
   }
 }
 
-async function isOwnerProxzi(req, res, next) {
+async function isOwnerProxze(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
     const task = await Task.findById(req.params.taskId);
-    if (user._id.equals(task.proxzi) || user.userType === "admin") {
+    if (user._id.equals(task.proxze) || user.userType === "admin") {
       return next();
     } else {
       return res.status(401).json({
@@ -181,7 +181,7 @@ async function isPaid(req, res, next) {
 
 async function isTaskUnassigned(req, res, next) {
   try {
-    if (await Task.findById(req.params.taskId).proxzi) {
+    if (await Task.findById(req.params.taskId).proxze) {
       return res.status(401).json({
         status: false,
         message: "You are not authorized",
@@ -226,9 +226,9 @@ module.exports = {
   passwordCheck,
   isAdmin,
   isPrincipal,
-  isProxzi,
+  isProxze,
   isOwnerPrincipal,
-  isOwnerProxzi,
+  isOwnerProxze,
   isPaid,
   isTaskUnassigned,
   // accessChat,

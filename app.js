@@ -27,7 +27,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 const uri =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/my_proxzi_app";
+  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/my_proxze_app";
 
 mongoose.set("strictQuery", false);
 mongoose
