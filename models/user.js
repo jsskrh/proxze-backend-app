@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       deafult: false,
     },
     token: [{ type: String }],
+    location: {
+      lat: { type: mongoose.Types.Decimal128, required: true, trim: true },
+      lng: { type: mongoose.Types.Decimal128, required: true, trim: true },
+    },
   },
   { timestamps: true }
 );

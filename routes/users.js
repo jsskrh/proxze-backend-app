@@ -7,6 +7,7 @@ const auth = require("../middleware/index");
 
 router.post("/register", Users.createUser);
 router.post("/login", Users.loginUser);
+router.put("/location", auth.authToken, Users.updateLocation);
 router.get("/profile", auth.authToken, Users.getUser);
 router.put("/settings/user-info", auth.authToken, Users.updateUserInfo);
 router.put(

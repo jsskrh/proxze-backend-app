@@ -2,20 +2,26 @@ const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true },
+    type: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     bill: { type: Number, required: true, trim: true },
-    educationLevel: { type: String, required: true, trim: true },
-    isCertified: { type: Boolean, required: true, trim: true },
-    lga: { type: String, required: true, trim: true },
-    state: { type: String, required: true, trim: true },
+    // educationLevel: { type: String, required: true, trim: true },
+    // isCertified: { type: Boolean, required: true, trim: true },
+    // lga: { type: String, required: true, trim: true },
+    // state: { type: String, required: true, trim: true },
     // address: { type: String, required: true, trim: true },
-    // location: { type: String, required: true, trim: true },
-    occupation: { type: String, required: true, trim: true },
-    searchRange: { type: String, required: true, trim: true },
-    skillLevel: { type: String, required: true, trim: true },
-    timeBlock: { type: String, required: true, trim: true },
-    yearsOfExperience: { type: String, required: true, trim: true },
+    location: {
+      label: { type: String, required: true, trim: true },
+      coords: {
+        lat: { type: mongoose.Types.Decimal128, required: true, trim: true },
+        lng: { type: mongoose.Types.Decimal128, required: true, trim: true },
+      },
+    },
+    // occupation: { type: String, required: true, trim: true },
+    // searchRange: { type: String, required: true, trim: true },
+    // skillLevel: { type: String, required: true, trim: true },
+    // timeBlock: { type: String, required: true, trim: true },
+    // yearsOfExperience: { type: String, required: true, trim: true },
     live: { type: Boolean, default: false, trim: true },
     timeline: [
       {

@@ -96,6 +96,11 @@ const loginUser = async (req, res) => {
         await user.save();
       }
 
+      // if (req.body.location) {
+      //   user.location = req.body.location;
+      //   await user.save();
+      // }
+
       const userData = {
         id: user._id,
         firstName: user.firstName,
@@ -113,6 +118,7 @@ const loginUser = async (req, res) => {
         avatar: user.avatar,
         bank: user.userBank,
         rating: user.rating,
+        // location: user.location,
         accountNumber: user.accountNumber && hideChars(user.accountNumber),
         postalCode: user.postalCode,
       };
@@ -289,6 +295,24 @@ const updatePassword = async (req, res) => {
   }
 };
 
+const updateLocation = async (req, res) => {
+  const { location } = req.body;
+
+  try {
+    await User.findByIdAndUpdate(req.user.id, { location: location });
+
+    return res.status(201).json({
+      status: true,
+      message: "User updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
 const deactivateAccount = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, { isDeactivated: true });
@@ -312,5 +336,6 @@ module.exports = {
   updateUserInfo,
   updatePaymentInfo,
   updatePassword,
+  updateLocation,
   deactivateAccount,
 };
