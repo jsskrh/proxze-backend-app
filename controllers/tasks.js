@@ -50,7 +50,7 @@ const createTask = async (req, res) => {
         label: location.label,
         geometry: {
           type: "Point",
-          coordinates: [location.lng, location.lat],
+          coordinates: [location.coords.lng, location.coords.lat],
         },
       },
       // state,
