@@ -28,7 +28,7 @@ router.put(
   "/view/:taskId/proxzi/make-offer",
   auth.authToken,
   auth.isProxzi,
-  auth.isPaid,
+  // auth.isPaid,
   auth.isTaskUnassigned,
   Tasks.makeOffer
 );
