@@ -81,8 +81,9 @@ const createTask = async (req, res) => {
         notifications.push({
           to: token,
           sound: "default",
-          body: "New task available!",
-          data: { taskId: newTask._id },
+          title: "New task available!",
+          body: "There is a new task close to you",
+          data: { screenName: "Task", params: { taskId: newTask._id } },
         });
       }
     }
