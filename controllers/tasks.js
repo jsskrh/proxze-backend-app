@@ -276,7 +276,8 @@ const getTaskpool = async (req, res) => {
     }).sort({
       createdAt: -1,
     });
-    // console.log(tasks);
+    console.log(tasks);
+
     const mappedTasks = tasks.map((task) => {
       return createTaskpoolObject(task);
     });
