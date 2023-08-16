@@ -297,17 +297,20 @@ const getTaskpool = async (req, res) => {
 };
 
 const makeOffer = async (req, res) => {
-  const { coverLetter, timestamp } = req.body;
-
-  if (!coverLetter || !timestamp) {
-    return res.status(401).json({
-      status: false,
-      message: "No cover letter present",
-    });
-  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const task = await Task.findById(req.params.taskId);
+    const { coverLetter, timestamp } = req.body;
+
+    if (!coverLetter || !timestamp) {
+      return res.status(401).json({
+        status: false,
+        message: "No cover letter present",
+      });
+    }
+
+    const task = await Task.findById(req.params.taskId).session(session);
 
     if (!task) {
       return res.status(404).json({
@@ -316,18 +319,37 @@ const makeOffer = async (req, res) => {
       });
     }
 
-    const existingOffer = task.offers.find(
+    const myExistingOffer = task.offers.find(
       (offer) => offer.proxzi.toString() === req.user.id
     );
 
-    if (existingOffer) {
+    if (myExistingOffer) {
       return res.status(400).json({
         status: false,
         message: "You have already made an offer",
       });
     }
 
-    task.offers.push({ proxzi: req.user.id, coverLetter, timestamp });
+    const existingOffer = task.offers.length > 0;
+
+    if (existingOffer) {
+      return res.status(400).json({
+        status: false,
+        message: "An offer already exists",
+      });
+    }
+
+    // Create a new offer
+    const newOffer = {
+      proxzi: req.user.id,
+      coverLetter,
+      timestamp,
+    };
+
+    // Add the new offer to the task's offers array
+    task.offers.push(newOffer);
+
+    // Save the task with the new offer
     await task.save();
 
     const populatedTask = await Task.findById(task._id)
@@ -337,16 +359,49 @@ const makeOffer = async (req, res) => {
     //.populate("attachments");
     // .populate("offers.proxzi.reviews");
 
-    const newNotification = await Message.create({
-      type: "offer",
-      recipient: task.principal._id,
-      sender: req.user.id,
-      task: task._id,
-    });
+    const principal = await User.findById(populatedTask.principal._id);
 
-    await User.findByIdAndUpdate(task.principal._id, {
-      $push: { notifications: newNotification._id },
-    });
+    if (principal.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of principal.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "New offer!",
+          body: `There is a new offer for your ${task.type} task`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    // const newNotification = await Message.create({
+    //   type: "offer",
+    //   recipient: task.principal._id,
+    //   sender: req.user.id,
+    //   task: task._id,
+    // });
+
+    // await User.findByIdAndUpdate(task.principal._id, {
+    //   $push: { notifications: newNotification._id },
+    // });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(201).json({
       status: true,
@@ -354,6 +409,9 @@ const makeOffer = async (req, res) => {
       data: createTaskObject(populatedTask),
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
     res.status(500).json({
       status: false,
       message: "Server error",

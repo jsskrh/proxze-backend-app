@@ -3,24 +3,26 @@ const { getAverageRating } = require("./helpers");
 const createTaskpoolObject = (task) => {
   return {
     id: task._id,
-    title: task.title,
+    type: task.type,
     description: task.description,
     timeline: task.timeline,
     rating: task.rating,
-    lga: task.lga,
-    state: task.state,
+    location: task.location,
     bill: task.bill,
+    createdAt: task.createdAt,
   };
 };
 
 const createTaskListObject = (task) => {
   return {
     id: task._id,
-    title: task.title,
+    type: task.type,
     timeline: task.timeline,
     bill: task.bill,
     proxzi: task.proxzi && `${task.proxzi.firstName} ${task.proxzi.lastName}`,
     principal: `${task.principal.firstName} ${task.principal.lastName}`,
+    location: task.location,
+    createdAt: task.createdAt,
   };
 };
 
