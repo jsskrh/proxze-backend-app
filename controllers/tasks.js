@@ -11,7 +11,7 @@ const {
   createTaskListObject,
 } = require("../utils/tasks");
 const { sendPushNotification } = require("../utils/pushNotifications");
-const Expo = require("expo-server-sdk");
+const { Expo } = require("expo-server-sdk");
 const axios = require("axios");
 dotenv.config();
 
@@ -65,7 +65,7 @@ const createTask = async (req, res) => {
       userType: "proxze", // Replace with the actual userType value
       location: {
         $geoWithin: {
-          $centerSphere: [[location.lng, location.lat], 5 / 6371], // 5km radius in radians
+          $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
         },
       },
       token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
