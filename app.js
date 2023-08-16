@@ -3,7 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/users");
-// const taskRoutes = require("./routes/tasks");
+const taskRoutes = require("./routes/tasks");
 // const chatRoutes = require("./routes/chats");
 // const streamRoutes = require("./routes/stream");
 // const ticketRoutes = require("./routes/tickets");
@@ -44,7 +44,7 @@ mongoose
   });
 
 app.use("/api/user", userRoutes);
-// app.use("/api/task", taskRoutes);
+app.use("/api/task", taskRoutes);
 // app.use("/api/chat", chatRoutes);
 // app.use("/api/message", messageRoutes);
 // app.use("/api/ticket", ticketRoutes);

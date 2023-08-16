@@ -299,7 +299,7 @@ const updateLocation = async (req, res) => {
   const { location } = req.body;
   console.log(req.body);
   try {
-    await User.findByIdAndUpdate(req.user.id, { location: location });
+    await User.findByIdAndUpdate(req.user.id, { location });
 
     return res.status(201).json({
       status: true,
