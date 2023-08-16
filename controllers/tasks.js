@@ -13,6 +13,7 @@ const {
 const { sendPushNotification } = require("../utils/pushNotifications");
 const { Expo } = require("expo-server-sdk");
 const axios = require("axios");
+const mongoose = require("mongoose");
 dotenv.config();
 
 const createTask = async (req, res) => {
