@@ -267,11 +267,13 @@ const getTaskpool = async (req, res) => {
       paymentStatus: false,
       proxze: { $exists: false },
       location: {
-        $geoWithin: {
-          $centerSphere: [
-            [userLocation.coordinates[0], userLocation.coordinates[1]],
-            5 / 6371, // 5km radius in radians
-          ],
+        geometry: {
+          $geoWithin: {
+            $centerSphere: [
+              [userLocation.coordinates[0], userLocation.coordinates[1]],
+              5 / 6371, // 5km radius in radians
+            ],
+          },
         },
       },
     }).sort({
