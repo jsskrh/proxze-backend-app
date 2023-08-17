@@ -661,16 +661,16 @@ const completeTask = async (req, res) => {
       });
     }
 
-    const newNotification = await Message.create({
-      type: "complete",
-      recipient: task.principal._id,
-      sender: task.proxze._id,
-      task: task._id,
-    });
+    // const newNotification = await Message.create({
+    //   type: "complete",
+    //   recipient: task.principal._id,
+    //   sender: task.proxze._id,
+    //   task: task._id,
+    // });
 
-    await User.findByIdAndUpdate(task.principal._id, {
-      $push: { notifications: newNotification._id },
-    });
+    // await User.findByIdAndUpdate(task.principal._id, {
+    //   $push: { notifications: newNotification._id },
+    // });
 
     return res.status(201).json({
       status: true,
@@ -716,16 +716,16 @@ const confirmTask = async (req, res) => {
       });
     }
 
-    const newNotification = await Message.create({
-      type: "confirm",
-      recipient: task.proxze._id,
-      sender: task.principal._id,
-      task: task._id,
-    });
+    // const newNotification = await Message.create({
+    //   type: "confirm",
+    //   recipient: task.proxze._id,
+    //   sender: task.principal._id,
+    //   task: task._id,
+    // });
 
-    await User.findByIdAndUpdate(task.proxze._id, {
-      $push: { notifications: newNotification._id },
-    });
+    // await User.findByIdAndUpdate(task.proxze._id, {
+    //   $push: { notifications: newNotification._id },
+    // });
 
     return res.status(201).json({
       status: true,
