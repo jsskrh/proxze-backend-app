@@ -73,7 +73,10 @@ const creditAccount = async ({
   if (purpose === "deposit") {
     task = await Task.findByIdAndUpdate(
       taskId,
-      { paymentStatus: true },
+      {
+        paymentStatus: true,
+        $push: { timeline: { status: "approved", timestamp: Date.now() } },
+      },
       { new: true }
     )
       .populate("principal")

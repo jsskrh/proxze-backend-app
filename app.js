@@ -10,7 +10,7 @@ const taskRoutes = require("./routes/tasks");
 // const reviewsRoutes = require("./routes/reviews");
 // const messageRoutes = require("./routes/messages");
 // const paystackRoutes = require("./routes/paystack");
-// const transactionRoutes = require("./routes/transactions");
+const transactionRoutes = require("./routes/transactions");
 // const settingsRoutes = require("./routes/settings");
 const { billingAlgorithmSeeder } = require("./utils/seed/billingAlgorithm");
 dotenv.config();
@@ -51,7 +51,7 @@ app.use("/api/task", taskRoutes);
 // app.use("/api/review", reviewsRoutes);
 // app.use("/api/stream", streamRoutes);
 // app.use("/api/paystack", paystackRoutes);
-// app.use("/api/transaction", transactionRoutes);
+app.use("/api/transaction", transactionRoutes);
 // app.use("/api/settings", settingsRoutes);
 
 module.exports = app;

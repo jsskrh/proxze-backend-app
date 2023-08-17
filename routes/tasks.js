@@ -53,7 +53,7 @@ router.put(
 router.put(
   "/view/:taskId/admin/start-task",
   auth.authToken,
-  auth.isAdmin,
+  // auth.isAdmin,
   auth.isPaid,
   Tasks.startTask
 );
