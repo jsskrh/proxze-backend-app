@@ -32,7 +32,7 @@ const transfer = async (req, res) => {
     const task = await Task.findById(taskId);
     const billingAlgorithm = await BillingAlgorithm.findOne();
     const paymentRatio = billingAlgorithm.paymentPercentage / 100;
-    const beneficiary = task.proxzi;
+    const beneficiary = task.proxze;
     // const principalId = task.principal;
 
     const reference =
@@ -42,7 +42,7 @@ const transfer = async (req, res) => {
       ).toString(36);
 
     // const benefactor = principalId;
-    // const beneficiary = proxziId;
+    // const beneficiary = proxzeId;
 
     if (!beneficiary || !task.bill) {
       return res.status(400).json({
@@ -74,7 +74,7 @@ const transfer = async (req, res) => {
         reference,
         summary,
         timestamp,
-        transactionSummary: `TRANSFER FROM: Proxzi App. FOR: ${taskId}. TRANSACTION REF:${reference} `,
+        transactionSummary: `TRANSFER FROM: Proxze App. FOR: ${taskId}. TRANSACTION REF:${reference} `,
         session,
       }),
     ]);
