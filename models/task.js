@@ -63,6 +63,12 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    rejects: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     offers: [
       {
         proxze: {
@@ -80,6 +86,7 @@ const taskSchema = new mongoose.Schema(
           type: Date,
           trim: true,
         },
+        isRejected: { type: Boolean, default: false },
         // proposal: { type: String, required: true },
       },
     ],

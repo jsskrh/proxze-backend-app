@@ -10,6 +10,8 @@ const createTaskpoolObject = (task) => {
     location: task.location,
     bill: task.bill,
     createdAt: task.createdAt,
+    startDate: task.startDate,
+    endDate: task.endDate,
   };
 };
 
@@ -23,6 +25,8 @@ const createTaskListObject = (task) => {
     principal: `${task.principal.firstName} ${task.principal.lastName}`,
     location: task.location,
     createdAt: task.createdAt,
+    startDate: task.startDate,
+    endDate: task.endDate,
   };
 };
 
@@ -79,6 +83,7 @@ const createTaskObject = (task, stream) => {
         chat: offer.chat ? offer.chat : null,
         coverLetter: offer.coverLetter,
         timestamp: offer.timestamp,
+        isRejected: offer.isRejected,
       };
     }),
     attachments: task.attachments,

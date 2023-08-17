@@ -473,6 +473,50 @@ const acceptOffer = async (req, res) => {
   }
 };
 
+const rejectOffer = async (req, res) => {
+  try {
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.taskId },
+      {
+        $push: {
+          rejects: req.body.proxze,
+        },
+        $set: {
+          "offers.$[offer].isRejected": true,
+        },
+      },
+      {
+        new: true,
+        arrayFilters: [{ "offer.proxze": req.body.proxze }],
+      }
+    )
+      .populate("principal")
+      // .populate("proxze")
+      .populate("principal.reviews")
+      .populate("offers.proxze");
+    //.populate("attachments");
+    // .populate("offers.proxze.reviews");
+
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task does not exist",
+      });
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: `Proxze has been rejected`,
+      data: createTaskObject(task),
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
 const startTask = async (req, res) => {
   try {
     const task = await Task.findOneAndUpdate(
@@ -856,6 +900,7 @@ module.exports = {
   getTaskpool,
   makeOffer,
   acceptOffer,
+  rejectOffer,
   startTask,
   uploadAttachment,
   completeTask,

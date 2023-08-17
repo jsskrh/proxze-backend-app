@@ -37,9 +37,18 @@ router.put(
   auth.authToken,
   auth.isPrincipal,
   auth.isOwnerPrincipal,
-  auth.isPaid,
+  // auth.isPaid,
   auth.isTaskUnassigned,
   Tasks.acceptOffer
+);
+router.put(
+  "/view/:taskId/principal/reject-offer",
+  auth.authToken,
+  auth.isPrincipal,
+  auth.isOwnerPrincipal,
+  // auth.isPaid,
+  auth.isTaskUnassigned,
+  Tasks.rejectOffer
 );
 router.put(
   "/view/:taskId/admin/start-task",
