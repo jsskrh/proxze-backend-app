@@ -1,10 +1,15 @@
 const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema(
+const notificationSchema = new mongoose.Schema(
   {
-    type: { type: String, required: true, trim: true },
+    type: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ["review", "task", "wallet", "ticket"],
+    },
     seen: { type: Boolean, default: false, trim: true },
-    read: { type: Boolean, default: false, trim: true },
+    // read: { type: Boolean, default: false, trim: true },
     content: { type: String },
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,5 +32,5 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Message = mongoose.model("Message", messageSchema);
-module.exports = Message;
+const Notification = mongoose.model("Notification", notificationSchema);
+module.exports = Notification;

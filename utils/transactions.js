@@ -3,7 +3,8 @@ const Transaction = require("../models/transaction");
 const System = require("../models/system");
 const Task = require("../models/task");
 const { createTaskObject } = require("./tasks");
-const Message = require("../models/message");
+const Notification = require("../models/notification");
+const { Expo } = require("expo-server-sdk");
 
 const creditAccount = async ({
   amount,
@@ -115,10 +116,47 @@ const creditAccount = async ({
       });
     }
 
-    const confirmNotification = await Message.create(
+    const proxze = task.proxze;
+
+    if (proxze.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of proxze.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task confirmed!",
+          body: `Your completed task has been confirmed`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Wallet credited!",
+          body: `Your wallet has been credited`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const confirmNotification = await Notification.create(
       [
         {
-          type: "confirm",
+          type: "task",
+          content: "Your completed task has been confirmed",
           recipient: task.proxze._id,
           sender: task.principal._id,
           task: task._id,
@@ -127,10 +165,11 @@ const creditAccount = async ({
       { session }
     );
 
-    const creditNotification = await Message.create(
+    const creditNotification = await Notification.create(
       [
         {
-          type: "credit",
+          type: "wallet",
+          content: `Your wallet has been credited with ${amount}`,
           recipient: task.proxze._id,
           sender: task.principal._id,
           task: task._id,

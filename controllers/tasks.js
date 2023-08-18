@@ -2,7 +2,7 @@ const dotenv = require("dotenv");
 const Task = require("../models/task");
 const User = require("../models/user");
 const Review = require("../models/review");
-const Message = require("../models/message");
+const Notification = require("../models/notification");
 const Stream = require("../models/stream");
 const { getAverageRating } = require("../utils/helpers");
 const {
@@ -234,8 +234,44 @@ const approveRejectRequest = async (req, res) => {
     //.populate("attachments");
     // .populate("offers.proxze.reviews");
 
-    const newNotification = await Message.create({
-      type: req.params.type === "approved" ? "approve" : "reject",
+    const principal = task.principal;
+
+    if (principal.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of principal.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task update",
+          body:
+            req.params.type === "approved"
+              ? `Your ${task.type} task has been approved`
+              : `Your ${task.type} task was rejected`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const newNotification = await Notification.create({
+      type: "task",
+      content:
+        req.params.type === "approved"
+          ? "Your task has been approved"
+          : "Your task was rejected",
       recipient: task.principal._id,
       task: task._id,
     });
@@ -389,16 +425,17 @@ const makeOffer = async (req, res) => {
       }
     }
 
-    // const newNotification = await Message.create({
-    //   type: "offer",
-    //   recipient: task.principal._id,
-    //   sender: req.user.id,
-    //   task: task._id,
-    // });
+    const newNotification = await Notification.create({
+      type: "task",
+      content: "You have a new offer",
+      recipient: task.principal._id,
+      sender: req.user.id,
+      task: task._id,
+    });
 
-    // await User.findByIdAndUpdate(task.principal._id, {
-    //   $push: { notifications: newNotification._id },
-    // });
+    await User.findByIdAndUpdate(task.principal._id, {
+      $push: { notifications: newNotification._id },
+    });
 
     // Commit the transaction
     await session.commitTransaction();
@@ -449,8 +486,38 @@ const acceptOffer = async (req, res) => {
       });
     }
 
-    const newNotification = await Message.create({
-      type: "assign",
+    const proxze = task.proxze;
+
+    if (proxze.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of proxze.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "New task!",
+          body: `You have been assigned a task`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const newNotification = await Notification.create({
+      type: "task",
+      content: "You have been assigned a task",
       recipient: task.proxze._id,
       sender: task.principal._id,
       task: task._id,
@@ -548,14 +615,62 @@ const startTask = async (req, res) => {
       });
     }
 
-    const newPrincipalNotification = await Message.create({
-      type: "start",
+    const proxze = task.proxze;
+    const principal = task.principal;
+
+    // if (proxze.token[0] || principal.token[0]) {
+    const expo = new Expo();
+    const notifications = [];
+
+    // for (const user of usersWithinRadius) {
+    if (proxze.token[0]) {
+      for (const token of proxze.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task started!",
+          body: `Your ${task.type} task has begun`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+    }
+
+    if (principal.token[0]) {
+      for (const token of principal.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task started!",
+          body: `Your ${task.type} task has begun`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+    }
+    // }
+
+    if (notifications.length !== 0) {
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+    // }
+
+    const newPrincipalNotification = await Notification.create({
+      type: "task",
+      content: `Your ${task.type} task has started`,
       recipient: task.principal._id,
       task: task._id,
     });
 
-    const newProxzeNotification = await Message.create({
-      type: "start",
+    const newProxzeNotification = await Notification.create({
+      type: "task",
+      content: `Your ${task.type} task has started`,
       recipient: task.proxze._id,
       task: task._id,
     });
@@ -661,16 +776,46 @@ const completeTask = async (req, res) => {
       });
     }
 
-    // const newNotification = await Message.create({
-    //   type: "complete",
-    //   recipient: task.principal._id,
-    //   sender: task.proxze._id,
-    //   task: task._id,
-    // });
+    const principal = task.principal;
 
-    // await User.findByIdAndUpdate(task.principal._id, {
-    //   $push: { notifications: newNotification._id },
-    // });
+    if (principal.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of principal.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task completed!",
+          body: `Your ${task.type} task has been completed`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const newNotification = await Notification.create({
+      type: "task",
+      content: `Your ${task.type} task has been completed`,
+      recipient: task.principal._id,
+      sender: task.proxze._id,
+      task: task._id,
+    });
+
+    await User.findByIdAndUpdate(task.principal._id, {
+      $push: { notifications: newNotification._id },
+    });
 
     return res.status(201).json({
       status: true,
@@ -716,16 +861,46 @@ const confirmTask = async (req, res) => {
       });
     }
 
-    // const newNotification = await Message.create({
-    //   type: "confirm",
-    //   recipient: task.proxze._id,
-    //   sender: task.principal._id,
-    //   task: task._id,
-    // });
+    const proxze = task.proxze;
 
-    // await User.findByIdAndUpdate(task.proxze._id, {
-    //   $push: { notifications: newNotification._id },
-    // });
+    if (proxze.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of proxze.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "Task confirmed!",
+          body: `Your completed task has been confirmed`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const newNotification = await Notification.create({
+      type: "task",
+      content: `Your completed task has been confirmed`,
+      recipient: task.proxze._id,
+      sender: task.principal._id,
+      task: task._id,
+    });
+
+    await User.findByIdAndUpdate(task.proxze._id, {
+      $push: { notifications: newNotification._id },
+    });
 
     return res.status(201).json({
       status: true,
