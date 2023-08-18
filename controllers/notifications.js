@@ -22,7 +22,7 @@ const getAllNotifications = async (req, res) => {
         recipient: notification.recipient,
         sender: notification.sender,
         task: notification.task
-          ? { id: notification.task._id, title: notification.task.title }
+          ? { id: notification.task._id, type: notification.task.type }
           : null,
         createdAt: notification.createdAt,
         ticket: notification.ticket,
