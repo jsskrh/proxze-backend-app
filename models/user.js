@@ -60,7 +60,9 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
-    notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Message" }],
+    notifications: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Notification" },
+    ],
     userBank: {
       type: String,
     },
