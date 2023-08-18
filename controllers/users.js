@@ -130,6 +130,7 @@ const loginUser = async (req, res) => {
       res.status(401).send("Invalid Credentials");
     }
   } catch (error) {
+    console.log(error);
     res.status(500).send(error);
   }
 };

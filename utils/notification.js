@@ -1,6 +1,6 @@
-const createMessageObject = (message) => {
+const createNotificationObject = (notification) => {
   return {
-    id: message._id,
+    id: notification._id,
     title: task.title,
     description: task.description,
     timeline: task.timeline,
@@ -12,5 +12,5 @@ const createMessageObject = (message) => {
 };
 
 module.exports = {
-  createMessageObject,
+  createNotificationObject,
 };

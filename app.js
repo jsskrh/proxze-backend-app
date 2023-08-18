@@ -8,7 +8,7 @@ const taskRoutes = require("./routes/tasks");
 // const streamRoutes = require("./routes/stream");
 // const ticketRoutes = require("./routes/tickets");
 // const reviewsRoutes = require("./routes/reviews");
-// const messageRoutes = require("./routes/messages");
+const notificationRoutes = require("./routes/notifications");
 // const paystackRoutes = require("./routes/paystack");
 const transactionRoutes = require("./routes/transactions");
 // const settingsRoutes = require("./routes/settings");
@@ -46,7 +46,7 @@ mongoose
 app.use("/api/user", userRoutes);
 app.use("/api/task", taskRoutes);
 // app.use("/api/chat", chatRoutes);
-// app.use("/api/message", messageRoutes);
+app.use("/api/notification", notificationRoutes);
 // app.use("/api/ticket", ticketRoutes);
 // app.use("/api/review", reviewsRoutes);
 // app.use("/api/stream", streamRoutes);
