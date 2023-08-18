@@ -18,7 +18,7 @@ const getAllNotifications = async (req, res) => {
         id: notification._id,
         type: notification.type,
         seen: notification.seen,
-        read: notification.read,
+        // read: notification.read,
         recipient: notification.recipient,
         sender: notification.sender,
         task: notification.task
@@ -27,6 +27,7 @@ const getAllNotifications = async (req, res) => {
         createdAt: notification.createdAt,
         ticket: notification.ticket,
         content: notification.content,
+        amount: notification.amount,
       };
     });
     return res.status(201).json({
