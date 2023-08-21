@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/users");
 const taskRoutes = require("./routes/tasks");
-// const chatRoutes = require("./routes/chats");
+const chatRoutes = require("./routes/chats");
 // const streamRoutes = require("./routes/stream");
 // const ticketRoutes = require("./routes/tickets");
 // const reviewsRoutes = require("./routes/reviews");
@@ -45,7 +45,7 @@ mongoose
 
 app.use("/api/user", userRoutes);
 app.use("/api/task", taskRoutes);
-// app.use("/api/chat", chatRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/notification", notificationRoutes);
 // app.use("/api/ticket", ticketRoutes);
 // app.use("/api/review", reviewsRoutes);

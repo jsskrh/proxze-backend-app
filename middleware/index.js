@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const Task = require("../models/task");
-// const Chat = require("../models/chat");
+const Chat = require("../models/chat");
 
 function authToken(req, res, next) {
   if (
@@ -197,29 +197,34 @@ async function isTaskUnassigned(req, res, next) {
   }
 }
 
-// async function accessChat(req, res, next) {
-//   try {
-//     const chat = await Chat.findOne({
-//       _id: req.params.chatId,
-//       users: req.user.id,
-//     });
+async function accessChat(req, res, next) {
+  try {
+    const chat = await Chat.findOne({
+      _id: req.params.chatId,
+      users: req.user.id,
+    });
 
-//     if (chat) {
-//       return next();
-//     } else {
-//       return res.status(401).json({
-//         status: false,
-//         message: "You are not authorized",
-//       });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({
-//       status: false,
-//       message: "Server error",
-//     });
-//   }
-// }
+    console.log({
+      _id: req.params.chatId,
+      users: req.user.id,
+    });
+
+    if (chat) {
+      return next();
+    } else {
+      return res.status(401).json({
+        status: false,
+        message: "You are not authorized",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+}
 
 module.exports = {
   authToken,
@@ -231,5 +236,5 @@ module.exports = {
   isOwnerProxze,
   isPaid,
   isTaskUnassigned,
-  // accessChat,
+  accessChat,
 };

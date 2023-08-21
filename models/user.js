@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "Nigeria",
     },
-    location: { type: String },
+    // location: { type: String },
     userType: {
       type: String,
       required: true,

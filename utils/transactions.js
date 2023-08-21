@@ -184,6 +184,8 @@ const creditAccount = async ({
       creditNotification._id,
     ];
 
+    console.log(notificationsToPush);
+
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: { $each: notificationsToPush } },
     }).session(session);
