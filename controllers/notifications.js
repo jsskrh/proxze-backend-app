@@ -4,16 +4,22 @@ const User = require("../models/user");
 
 const getAllNotifications = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate({
-      path: "notifications",
-      populate: {
-        path: "task",
-        model: "Task",
-      },
-      options: { sort: { createdAt: -1 } },
-    });
+    // const user = await User.findById(req.user.id).populate({
+    //   path: "notifications",
+    //   populate: {
+    //     path: "task",
+    //     model: "Task",
+    //   },
+    //   options: { sort: { createdAt: -1 } },
+    // })
 
-    const notifications = user.notifications.map((notification) => {
+    const userNotifications = await Notification.find({
+      recipient: req.user.id,
+    })
+      .populate("task")
+      .sort({ updatedAt: -1 });
+
+    const notifications = userNotifications.map((notification) => {
       return {
         id: notification._id,
         type: notification.type,
@@ -30,6 +36,7 @@ const getAllNotifications = async (req, res) => {
         amount: notification.amount,
       };
     });
+    console.log(notifications);
     return res.status(201).json({
       status: true,
       message: "All notifications fetched",
