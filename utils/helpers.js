@@ -21,4 +21,28 @@ const getAverageRating = (reviews) => {
   return average;
 };
 
-module.exports = { hideChars, getAverageRating };
+const sortDataByDate = (data) => {
+  // Define a custom comparison function
+  function compareDates(a, b) {
+    // Extract year and month from the objects
+    const aYear = a.year;
+    const bYear = b.year;
+    const aMonth = new Date(Date.parse(a.month + " 1, 2000")).getMonth() + 1;
+    const bMonth = new Date(Date.parse(b.month + " 1, 2000")).getMonth() + 1;
+
+    // Compare years first
+    if (aYear !== bYear) {
+      return aYear - bYear;
+    }
+
+    // If years are the same, compare months
+    return aMonth - bMonth;
+  }
+
+  // Sort the data using the custom comparison function
+  data.sort(compareDates);
+
+  return data;
+};
+
+module.exports = { hideChars, getAverageRating, sortDataByDate };

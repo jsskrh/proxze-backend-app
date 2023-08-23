@@ -1,8 +1,10 @@
 const mongoose = require("mongoose");
 const BillingAlgorithm = require("../models/billingAlgorithm");
 const Task = require("../models/task");
+const User = require("../models/user");
 const Transaction = require("../models/transaction");
 const { creditAccount, debitAccount } = require("../utils/transactions");
+const { sortDataByDate } = require("../utils/helpers");
 
 const getTransactions = async (req, res) => {
   try {
@@ -244,4 +246,115 @@ const withdraw = async (req, res) => {
   }
 };
 
-module.exports = { transfer, deposit, withdraw, getTransactions };
+const getEarnings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Month is zero-based
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    // Step 1: Find all transactions for the user
+    const user = await User.findById(req.user.id);
+    const userTransactions = await Transaction.find({
+      user: userId,
+      transactionType: "CR",
+    });
+
+    console.log(userId);
+
+    // Step 2: Calculate the monthly earnings breakdown
+    const monthlyEarnings = Array.from({ length: 12 }, (_, index) => {
+      const monthIndex = currentMonth - 1 - index;
+      const year =
+        monthIndex >= 0
+          ? currentYear
+          : currentYear + Math.floor(monthIndex / 12);
+      const monthName =
+        monthNames[monthIndex >= 0 ? monthIndex : monthIndex + 12];
+
+      const monthTransactions = userTransactions.filter((transaction) => {
+        const transactionDate = new Date(transaction.createdAt);
+        return (
+          transactionDate.getFullYear() === year &&
+          transactionDate.getMonth() === monthIndex
+        );
+      });
+      const totalAmount = monthTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+        0
+      );
+      return { month: monthName, year, totalAmount };
+    });
+
+    // Step 3: Calculate the total amount for the current month
+    const currentMonthTransactions = userTransactions.filter((transaction) => {
+      const transactionDate = new Date(transaction.createdAt);
+      return (
+        transactionDate.getFullYear() === currentYear &&
+        transactionDate.getMonth() === currentMonth - 1
+      );
+    });
+    const currentMonthTotal = currentMonthTransactions.reduce(
+      (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+      0
+    );
+
+    // Step 4: Calculate the percentage increase or decrease compared to the previous month
+    const previousMonthTotal =
+      monthlyEarnings[currentMonth - 2] &&
+      monthlyEarnings[currentMonth - 2].totalAmount
+        ? monthlyEarnings[currentMonth - 2].totalAmount
+        : 0;
+    const percentageChange =
+      currentMonthTotal !== 0
+        ? ((currentMonthTotal - previousMonthTotal) / currentMonthTotal) * 100
+        : 0;
+
+    // Step 5: Calculate the total amount of 'CR' transactions for all time
+    const totalEarnings = userTransactions.reduce(
+      (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+      0
+    );
+
+    const recentTransactions = await Transaction.find({ user: userId })
+      .sort({ createdAt: -1 }) // Sort in descending order by creation date to get the most recent transactions first
+      .limit(3); // Limit the result to 3 transactions
+
+    // Create the result object
+    const result = {
+      balance: parseFloat(user.balance.toString()),
+      monthlyEarnings: sortDataByDate(monthlyEarnings),
+      currentMonthTotal,
+      percentageChange,
+      totalEarnings,
+      recentTransactions,
+    };
+
+    return res.status(201).json({
+      status: true,
+      message: "Earnings fetched",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get earnings. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+module.exports = { transfer, deposit, withdraw, getTransactions, getEarnings };

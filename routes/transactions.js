@@ -51,5 +51,6 @@ router.put(
   auth.isOwnerPrincipal,
   Transactions.transfer
 );
+router.get("/earnings", auth.authToken, Transactions.getEarnings);
 
 module.exports = router;
