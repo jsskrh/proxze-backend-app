@@ -926,20 +926,29 @@ const getOngoingTasks = async (req, res) => {
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     } else if (user.userType === "principal") {
       tasks = await Task.find({
         principal: user._id,
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     } else {
       tasks = await Task.find({
         "timeline.status": { $nin: ["rejected", "confirmed"] },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     }
 
     const mappedTasks = tasks.map((task) => {
@@ -975,7 +984,10 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     } else if (user.userType === "principal") {
       tasks = await Task.find({
         principal: user._id,
@@ -986,7 +998,10 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     } else {
       tasks = await Task.find({
         timeline: {
@@ -996,7 +1011,10 @@ const getTaskHistory = async (req, res) => {
         },
       })
         .populate("principal")
-        .populate("proxze");
+        .populate("proxze")
+        .sort({
+          createdAt: -1,
+        });
     }
 
     const mappedTasks = tasks.map((task) => {
