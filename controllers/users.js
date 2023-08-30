@@ -1,8 +1,14 @@
 const User = require("../models/user");
+const Task = require("../models/task");
+const Transaction = require("../models/transaction");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const { hideChars, getAverageRating } = require("../utils/helpers");
+const {
+  hideChars,
+  getAverageRating,
+  sortDataByDate,
+} = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 dotenv.config();
 
@@ -335,10 +341,252 @@ const deactivateAccount = async (req, res) => {
   }
 };
 
+const getDashboard = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Month is zero-based
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    // const monthNames = ["J","F","M","A","M","J","J","A","S","O","N","D"];
+
+    const user = await User.findById(req.user.id);
+
+    let result;
+
+    if (user.userType === "proxze") {
+      // Step 1: Find all transactions for the user
+      const userTransactions = await Transaction.find({
+        user: userId,
+        transactionType: "CR",
+      });
+
+      // Step 2: Calculate the monthly earnings breakdown
+      const monthlyEarnings = Array.from({ length: 12 }, (_, index) => {
+        const monthIndex = currentMonth - 1 - index;
+        const year =
+          monthIndex >= 0
+            ? currentYear
+            : currentYear + Math.floor(monthIndex / 12);
+        const monthName =
+          monthNames[monthIndex >= 0 ? monthIndex : monthIndex + 12];
+
+        const monthTransactions = userTransactions.filter((transaction) => {
+          const transactionDate = new Date(transaction.createdAt);
+          return (
+            transactionDate.getFullYear() === year &&
+            transactionDate.getMonth() === monthIndex
+          );
+        });
+        const totalAmount = monthTransactions.reduce(
+          (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+          0
+        );
+        return { month: monthName, year, totalAmount };
+      });
+
+      // Step 3: Calculate the total amount for the current month
+      const currentMonthTransactions = userTransactions.filter(
+        (transaction) => {
+          const transactionDate = new Date(transaction.createdAt);
+          return (
+            transactionDate.getFullYear() === currentYear &&
+            transactionDate.getMonth() === currentMonth - 1
+          );
+        }
+      );
+      const currentMonthTotal = currentMonthTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+        0
+      );
+
+      // Step 4: Calculate the percentage increase or decrease compared to the previous month
+      const previousMonthTotal =
+        monthlyEarnings[currentMonth - 2] &&
+        monthlyEarnings[currentMonth - 2].totalAmount
+          ? monthlyEarnings[currentMonth - 2].totalAmount
+          : 0;
+      const percentageChange =
+        currentMonthTotal !== 0
+          ? ((currentMonthTotal - previousMonthTotal) / currentMonthTotal) * 100
+          : 0;
+
+      // Step 5: Calculate the total amount of 'CR' transactions for all time
+      const totalEarnings = userTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+        0
+      );
+
+      const recentTransactions = await Transaction.find({ user: userId })
+        .sort({ createdAt: -1 }) // Sort in descending order by creation date to get the most recent transactions first
+        .limit(3); // Limit the result to 3 transactions
+
+      const tasksWithOffers = await Task.find({
+        proxze: null, // No proxze assigned
+        "offers.proxze": userId, // An offer where proxze equals userId exists
+      });
+
+      const confirmedTasks = await Task.find({
+        proxze: userId, // Match tasks where proxze matches the user's ID
+        "timeline.status": "confirmed", // Match tasks with a completed status in the timeline
+      });
+
+      // Find tasks where proxze is the same as req.user.id
+      const tasks = await Task.find({ proxze: req.user.id }).limit(3); // Limit the results to 3 tasks
+
+      // Filter out tasks that have a timeline object with status 'confirmed'
+      const ongoingTasks = tasks.filter((task) => {
+        return !task.timeline.some(
+          (timelineItem) => timelineItem.status === "confirmed"
+        );
+      });
+
+      // Create the result object
+      result = {
+        balance: parseFloat(user.balance.toString()),
+        monthlyEarnings: sortDataByDate(monthlyEarnings),
+        currentMonthTotal,
+        percentageChange,
+        totalEarnings,
+        // recentTransactions,
+        offers: { activeOffers: tasksWithOffers.length },
+        confirmedTasks: confirmedTasks.length,
+        ongoingTasks,
+        // rating: user.rating
+      };
+    } else if (user.userType === "principal") {
+      // Step 1: Find all transactions for the user
+      const userTransactions = await Transaction.find({
+        user: userId,
+        transactionType: "DR",
+      });
+
+      // Step 2: Calculate the monthly earnings breakdown
+      const monthlySpending = Array.from({ length: 12 }, (_, index) => {
+        const monthIndex = currentMonth - 1 - index;
+        const year =
+          monthIndex >= 0
+            ? currentYear
+            : currentYear + Math.floor(monthIndex / 12);
+        const monthName =
+          monthNames[monthIndex >= 0 ? monthIndex : monthIndex + 12];
+
+        const monthTransactions = userTransactions.filter((transaction) => {
+          const transactionDate = new Date(transaction.createdAt);
+          return (
+            transactionDate.getFullYear() === year &&
+            transactionDate.getMonth() === monthIndex
+          );
+        });
+        const totalAmount = monthTransactions.reduce(
+          (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+          0
+        );
+        return { month: monthName, year, totalAmount };
+      });
+
+      // Step 3: Calculate the total amount for the current month
+      const currentMonthTransactions = userTransactions.filter(
+        (transaction) => {
+          const transactionDate = new Date(transaction.createdAt);
+          return (
+            transactionDate.getFullYear() === currentYear &&
+            transactionDate.getMonth() === currentMonth - 1
+          );
+        }
+      );
+      const currentMonthTotal = currentMonthTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+        0
+      );
+
+      // Step 4: Calculate the percentage increase or decrease compared to the previous month
+      const previousMonthTotal =
+        monthlySpending[currentMonth - 2] &&
+        monthlySpending[currentMonth - 2].totalAmount
+          ? monthlySpending[currentMonth - 2].totalAmount
+          : 0;
+      const percentageChange =
+        currentMonthTotal !== 0
+          ? ((currentMonthTotal - previousMonthTotal) / currentMonthTotal) * 100
+          : 0;
+
+      // Step 5: Calculate the total amount of 'CR' transactions for all time
+      const totalSpending = userTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount.toString()),
+        0
+      );
+
+      const recentTransactions = await Transaction.find({ user: userId })
+        .sort({ createdAt: -1 }) // Sort in descending order by creation date to get the most recent transactions first
+        .limit(3); // Limit the result to 3 transactions
+
+      const tasksWithOffers = await Task.find({
+        proxze: null, // No proxze assigned
+        "offers.proxze": userId, // An offer where proxze equals userId exists
+      });
+
+      const confirmedTasks = await Task.find({
+        principal: userId, // Match tasks where proxze matches the user's ID
+        "timeline.status": "confirmed", // Match tasks with a completed status in the timeline
+      });
+
+      // Find tasks where proxze is the same as req.user.id
+      const tasks = await Task.find({ principal: req.user.id }).limit(3); // Limit the results to 3 tasks
+
+      // Filter out tasks that have a timeline object with status 'confirmed'
+      const ongoingTasks = tasks.filter((task) => {
+        return !task.timeline.some(
+          (timelineItem) => timelineItem.status === "confirmed"
+        );
+      });
+
+      // Create the result object
+      result = {
+        balance: parseFloat(user.balance.toString()),
+        monthlySpending: sortDataByDate(monthlySpending),
+        currentMonthTotal,
+        percentageChange,
+        totalSpending,
+        // recentTransactions,
+        offers: { activeOffers: tasksWithOffers.length },
+        confirmedTasks: confirmedTasks.length,
+        ongoingTasks,
+        // rating: user.rating
+      };
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Dashboard fetched",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get earnings. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
   getUser,
+  getDashboard,
   updateUserInfo,
   updatePaymentInfo,
   updatePassword,
