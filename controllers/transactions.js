@@ -8,9 +8,12 @@ const { sortDataByDate } = require("../utils/helpers");
 
 const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id }).sort({
-      createdBy: -1,
+    const userId = req.user.id;
+
+    const transactions = await Transaction.find({ user: userId }).sort({
+      createdAt: -1,
     });
+
     return res.status(201).json({
       status: true,
       message: "All transactions fetched",
