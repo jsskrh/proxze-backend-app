@@ -34,7 +34,7 @@ const createUser = async (req, res) => {
     ) {
       return res.status(400).json({
         status: false,
-        message: "Fill the in your details",
+        message: "Fill in your details",
       });
     }
 
@@ -561,11 +561,11 @@ const getDashboard = async (req, res) => {
         currentMonthTotal,
         percentageChange,
         totalSpending,
-        // recentTransactions,
+        recentTransactions,
         offers: { activeOffers: tasksWithOffers.length },
         confirmedTasks: confirmedTasks.length,
         ongoingTasks,
-        // rating: user.rating
+        rating: null,
       };
     }
 

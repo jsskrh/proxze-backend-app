@@ -43,6 +43,31 @@ function authToken(req, res, next) {
   return next();
 }
 
+async function onEnterprise(req, res, next) {
+  try {
+    const currentDate = new Date();
+    const oneMonthAgo = new Date(currentDate);
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+
+    const transaction = await Transaction.findOne({
+      user: req.user.id,
+      enterprise: true,
+      createdAt: {
+        $gte: oneMonthAgo,
+        $lte: currentDate,
+      },
+    });
+
+    req.user.enterprise = transaction;
+  } catch (err) {
+    return res.status(401).json({
+      status: false,
+      message: "Not on enterprise",
+    });
+  }
+  return next();
+}
+
 async function passwordCheck(req, res, next) {
   const { password } = req.body;
   try {
@@ -237,4 +262,5 @@ module.exports = {
   isPaid,
   isTaskUnassigned,
   accessChat,
+  onEnterprise,
 };

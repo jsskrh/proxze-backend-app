@@ -10,6 +10,7 @@ const {
   createTaskpoolObject,
   createTaskListObject,
 } = require("../utils/tasks");
+const { taskCreator } = require("../utils/tasks");
 const { sendPushNotification } = require("../utils/pushNotifications");
 const { Expo } = require("expo-server-sdk");
 const axios = require("axios");
@@ -40,70 +41,81 @@ const createTask = async (req, res) => {
     const principal = req.user.id;
     const user = await User.findById(req.user.id).populate({ path: "reviews" });
 
-    const newTask = await Task.create({
+    const createResult = await taskCreator({
       type,
       description,
       bill,
-      // educationLevel,
-      // lga,
-      // address,
-      location: {
-        label: location.label,
-        geometry: {
-          type: "Point",
-          coordinates: [location.coords.lng, location.coords.lat],
-        },
-      },
-      // state,
-      // occupation,
-      // searchRange,
-      // isCertified,
-      // skillLevel,
-      // timeBlock,
-      // yearsOfExperience,
+      location,
       startDate,
       endDate,
       principal,
-      rating: getAverageRating(user.reviews),
-      timeline: [{ status: "created", timestamp: Date.now() }],
+      user,
     });
 
-    const usersWithinRadius = await User.find({
-      userType: "proxze", // Replace with the actual userType value
-      location: {
-        $geoWithin: {
-          $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
-        },
-      },
-      token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
-    });
+    // const newTask = await Task.create({
+    //   type,
+    //   description,
+    //   bill,
+    //   // educationLevel,
+    //   // lga,
+    //   // address,
+    //   location: {
+    //     label: location.label,
+    //     geometry: {
+    //       type: "Point",
+    //       coordinates: [location.coords.lng, location.coords.lat],
+    //     },
+    //   },
+    //   // state,
+    //   // occupation,
+    //   // searchRange,
+    //   // isCertified,
+    //   // skillLevel,
+    //   // timeBlock,
+    //   // yearsOfExperience,
+    //   startDate,
+    //   endDate,
+    //   principal,
+    //   rating: getAverageRating(user.reviews),
+    //   timeline: [{ status: "created", timestamp: Date.now() }],
+    // });
 
-    console.log(usersWithinRadius);
+    // const usersWithinRadius = await User.find({
+    //   userType: "proxze", // Replace with the actual userType value
+    //   location: {
+    //     $geoWithin: {
+    //       $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
+    //     },
+    //   },
+    //   token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
+    // });
 
-    const expo = new Expo();
-    const notifications = [];
+    // console.log(usersWithinRadius);
 
-    for (const user of usersWithinRadius) {
-      for (const token of user.token) {
-        notifications.push({
-          to: token,
-          sound: "default",
-          title: "New task available!",
-          body: "There is a new task close to you",
-          data: { screenName: "Task", params: { taskId: newTask._id } },
-        });
-      }
-    }
+    // const expo = new Expo();
+    // const notifications = [];
 
-    const chunks = expo.chunkPushNotifications(notifications);
+    // for (const user of usersWithinRadius) {
+    //   for (const token of user.token) {
+    //     notifications.push({
+    //       to: token,
+    //       sound: "default",
+    //       title: "New task available!",
+    //       body: "There is a new task close to you",
+    //       data: { screenName: "Task", params: { taskId: newTask._id } },
+    //     });
+    //   }
+    // }
 
-    for (const chunk of chunks) {
-      try {
-        await expo.sendPushNotificationsAsync(chunk);
-      } catch (error) {
-        console.error(error);
-      }
-    }
+    // const chunks = expo.chunkPushNotifications(notifications);
+
+    // for (const chunk of chunks) {
+    //   try {
+    //     await expo.sendPushNotificationsAsync(chunk);
+    //   } catch (error) {
+    //     console.error(error);
+    //   }
+    // }
 
     // if (Expo.isExpoPushToken(expoPushToken)) {
     //   await sendPushNotification(expoPushToken, message);
@@ -111,7 +123,7 @@ const createTask = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Task created successfully",
-      data: newTask,
+      data: createResult,
     });
   } catch (error) {
     console.log(error);
@@ -173,9 +185,17 @@ const getTask = async (req, res) => {
           model: "Review",
         },
       })
-      .populate("offers.proxze");
+      .populate("offers.proxze")
+      .populate("proxzeReview")
+      .populate("principalReview");
     //.populate("attachments");
     // .populate("offers.proxze.reviews");
+
+    if (req.user.id.equals(task.principal._id)) {
+      // Update the lastViewed field with the current date and time
+      task.lastViewed = new Date();
+      await task.save();
+    }
 
     var stream = {};
     // await axios

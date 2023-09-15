@@ -1,4 +1,93 @@
 const { getAverageRating } = require("./helpers");
+const dotenv = require("dotenv");
+const Task = require("../models/task");
+const User = require("../models/user");
+const Review = require("../models/review");
+const Notification = require("../models/notification");
+const Stream = require("../models/stream");
+const { sendPushNotification } = require("./pushNotifications");
+const { Expo } = require("expo-server-sdk");
+const axios = require("axios");
+const mongoose = require("mongoose");
+dotenv.config();
+
+const taskCreator = async ({
+  type,
+  description,
+  bill,
+  location,
+  startDate,
+  endDate,
+  principal,
+  user,
+}) => {
+  const newTask = await Task.create({
+    type,
+    description,
+    bill,
+    // educationLevel,
+    // lga,
+    // address,
+    location: {
+      label: location.label,
+      geometry: {
+        type: "Point",
+        coordinates: [location.coords.lng, location.coords.lat],
+      },
+    },
+    // state,
+    // occupation,
+    // searchRange,
+    // isCertified,
+    // skillLevel,
+    // timeBlock,
+    // yearsOfExperience,
+    startDate,
+    endDate,
+    principal,
+    rating: getAverageRating(user.reviews),
+    timeline: [{ status: "created", timestamp: Date.now() }],
+  });
+
+  const usersWithinRadius = await User.find({
+    userType: "proxze", // Replace with the actual userType value
+    location: {
+      $geoWithin: {
+        $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
+      },
+    },
+    token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
+  });
+
+  console.log(usersWithinRadius);
+
+  const expo = new Expo();
+  const notifications = [];
+
+  for (const user of usersWithinRadius) {
+    for (const token of user.token) {
+      notifications.push({
+        to: token,
+        sound: "default",
+        title: "New task available!",
+        body: "There is a new task close to you",
+        data: { screenName: "Task", params: { taskId: newTask._id } },
+      });
+    }
+  }
+
+  const chunks = expo.chunkPushNotifications(notifications);
+
+  for (const chunk of chunks) {
+    try {
+      await expo.sendPushNotificationsAsync(chunk);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return newTask;
+};
 
 const createTaskpoolObject = (task) => {
   return {
@@ -152,6 +241,7 @@ const createAssignedTaskObject = (task) => {
 };
 
 module.exports = {
+  taskCreator,
   createTaskObject,
   createTaskpoolObject,
   createTaskListObject,

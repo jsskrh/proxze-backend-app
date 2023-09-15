@@ -29,6 +29,11 @@ const transactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
     },
+    enterprise: {
+      type: Boolean,
+      default: false,
+      trim: true,
+    },
     reference: { type: String, required: true },
     balanceBefore: {
       type: mongoose.Decimal128,

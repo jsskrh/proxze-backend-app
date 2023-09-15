@@ -57,8 +57,14 @@ const taskSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    proxzeReview: { type: Boolean, default: false, trim: true },
-    principalReview: { type: Boolean, default: false, trim: true },
+    proxzeReview: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review",
+    },
+    principalReview: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review",
+    },
     proxze: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
