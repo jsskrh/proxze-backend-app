@@ -130,6 +130,7 @@ const acceptBulkJob = async (req, res) => {
     for (const obj of job.data) {
       const newTask = await taskCreator({
         ...obj,
+        type: "Verification",
         user: job.organization,
         principal: job.organization._id,
       });
