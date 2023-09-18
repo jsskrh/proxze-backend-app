@@ -136,7 +136,7 @@ const acceptBulkJob = async (req, res) => {
       });
       createdTasks.push(newTask._id);
     }
-
+    job.approvalStatus = true;
     job.tasks = createdTasks;
     await job.save();
 
@@ -155,7 +155,7 @@ const acceptBulkJob = async (req, res) => {
 
 const getBulkJob = async (req, res) => {
   try {
-    const job = await BulkJob.findById(req.params.jobId);
+    const job = await BulkTask.findById(req.params.jobId);
 
     return res.status(201).json({
       status: true,
@@ -172,7 +172,7 @@ const getBulkJob = async (req, res) => {
 
 const getAllBulkJobs = async (req, res) => {
   try {
-    const jobs = await BulkJob.find({ organization: req.params.id });
+    const jobs = await BulkTask.find({ organization: req.params.id });
 
     return res.status(201).json({
       status: true,
@@ -189,7 +189,7 @@ const getAllBulkJobs = async (req, res) => {
 
 const removeBulkJob = async (req, res) => {
   try {
-    await BulkJob.findOneAndDelete({ _id: req.params.jobId });
+    await BulkTask.findOneAndDelete({ _id: req.params.jobId });
 
     return res.status(201).json({
       status: true,

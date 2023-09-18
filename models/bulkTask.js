@@ -8,7 +8,7 @@ const bulkTaskSchema = new mongoose.Schema(
       required: true,
     },
     bill: { type: Number, required: true, trim: true },
-    approvalStatus: { type: Boolean, default: false },
+    approvalStatus: { type: Boolean },
     data: [],
     // data: {
     //   type: String,
