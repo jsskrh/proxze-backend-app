@@ -169,6 +169,23 @@ const getBulkJob = async (req, res) => {
   }
 };
 
+const getAllBulkJobs = async (req, res) => {
+  try {
+    const jobs = await BulkJob.find({ organization: req.params.id });
+
+    return res.status(201).json({
+      status: true,
+      message: "Jobs fetched successfully",
+      data: jobs,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to get jobs. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
 const removeBulkJob = async (req, res) => {
   try {
     await BulkJob.findOneAndDelete({ _id: req.params.jobId });
@@ -189,6 +206,9 @@ module.exports = {
   createOrg,
   getOrg,
   getOrgs,
+  getBulkJob,
+  getAllBulkJobs,
   createBulkJob,
   acceptBulkJob,
+  removeBulkJob,
 };

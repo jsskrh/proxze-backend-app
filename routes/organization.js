@@ -9,7 +9,7 @@ router.post("/", auth.authToken, Organization.createOrg);
 router.get("/", auth.authToken, Organization.getOrgs);
 router.get("/:id", auth.authToken, Organization.getOrg);
 router.post("/:id/task", auth.authToken, Organization.createBulkJob);
-router.get("/:id/task", auth.authToken, Organization.getAllBulkJob);
+router.get("/:id/task", auth.authToken, Organization.getAllBulkJobs);
 router.put(
   "/:id/task/:jobId/accept",
   auth.authToken,
@@ -21,6 +21,6 @@ router.put(
   Organization.removeBulkJob
 );
 router.get("/:id/task/:jobId", auth.authToken, Organization.getBulkJob);
-router.delete("/:id/task/:jobId", auth.authToken, Organization.deleteBulkJob);
+// router.delete("/:id/task/:jobId", auth.authToken, Organization.deleteBulkJob);
 
 module.exports = router;
