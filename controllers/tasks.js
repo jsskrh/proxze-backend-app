@@ -191,11 +191,13 @@ const getTask = async (req, res) => {
     //.populate("attachments");
     // .populate("offers.proxze.reviews");
 
-    if (req.user.id.equals(task.principal._id)) {
-      // Update the lastViewed field with the current date and time
-      task.lastViewed = new Date();
-      await task.save();
-    }
+    console.log(req.user.id, task.principal._id);
+
+    // if (req.user.id.equals(task.principal._id)) {
+    //   // Update the lastViewed field with the current date and time
+    //   task.lastViewed = new Date();
+    //   await task.save();
+    // }
 
     var stream = {};
     // await axios
