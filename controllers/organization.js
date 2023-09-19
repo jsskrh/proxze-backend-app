@@ -169,7 +169,7 @@ const getBulkJob = async (req, res) => {
       })
       .populate({
         path: "tasks",
-        select: "_id timeline proxze",
+        select: "_id timeline proxze bill",
       })
       .populate({
         path: "tasks",
