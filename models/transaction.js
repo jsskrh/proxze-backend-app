@@ -29,6 +29,10 @@ const transactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
     },
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BulkTask",
+    },
     enterprise: {
       type: Boolean,
       default: false,

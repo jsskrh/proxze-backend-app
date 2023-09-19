@@ -170,20 +170,16 @@ const getBulkJob = async (req, res) => {
       .populate({
         path: "tasks",
         select: "_id timeline proxze bill",
-        populate: {
-          path: "proxze",
-          model: "User",
-          select: "_id firstName lastName email avatar",
-        },
+        // populate: {
+        //   path: "proxze",
+        //   model: "User",
+        //   select: "_id firstName lastName email avatar",
+        // },
+      })
+      .populate({
+        path: "tasks.proxze",
+        select: "_id firstName lastName email avatar",
       });
-    // .populate({
-    //   path: "tasks",
-    //   populate: {
-    //     path: "proxze",
-    //     model: "User",
-    //     select: "_id firstName lastName email avatar",
-    //   },
-    // });
 
     return res.status(201).json({
       status: true,
