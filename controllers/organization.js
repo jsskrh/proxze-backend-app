@@ -102,6 +102,7 @@ const createBulkJob = async (req, res) => {
 
     const bulkTask = await BulkTask.create({
       organization: req.params.id,
+      createdBy: req.user.id,
       bill,
       data,
     });
@@ -132,30 +133,52 @@ const acceptBulkJob = async (req, res) => {
         ...obj,
         type: "Verification",
         user: job.organization,
-        principal: job.organization._id,
+        principal: job.createdBy,
+        organization: job.organization._id,
       });
       createdTasks.push(newTask._id);
     }
-    job.approvalStatus = true;
+    job.status = "approved";
+    job.approvedBy = req.user.id;
     job.tasks = createdTasks;
     await job.save();
 
     return res.status(201).json({
       status: true,
-      message: "Bulk task created successfully",
+      message: "Bulk task accepted successfully",
       return: job,
     });
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to create bulk tasks. Please try again. \n Error: ${err}`,
+      message: `Unable to accept bulk tasks. Please try again. \n Error: ${err}`,
     });
   }
 };
 
 const getBulkJob = async (req, res) => {
   try {
-    const job = await BulkTask.findById(req.params.jobId);
+    const job = await BulkTask.findById(req.params.jobId)
+      .populate({
+        path: "createdBy",
+        select: "_id firstName lastName email avatar",
+      })
+      .populate({
+        path: "approvedBy",
+        select: "_id firstName lastName email avatar",
+      })
+      .populate({
+        path: "tasks",
+        select: "_id timeline proxze",
+      })
+      .populate({
+        path: "tasks",
+        populate: {
+          path: "proxze",
+          model: "User",
+          select: "_id firstName lastName email avatar",
+        },
+      });
 
     return res.status(201).json({
       status: true,

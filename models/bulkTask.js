@@ -8,7 +8,17 @@ const bulkTaskSchema = new mongoose.Schema(
       required: true,
     },
     bill: { type: Number, required: true, trim: true },
-    approvalStatus: { type: Boolean },
+    status: {
+      type: String,
+      default: "pending",
+      enum: ["pending", "approved", "rejected", "active", "completed"],
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     data: [],
     // data: {
     //   type: String,

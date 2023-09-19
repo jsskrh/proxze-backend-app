@@ -55,7 +55,12 @@ const taskSchema = new mongoose.Schema(
     principal: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
+    },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      // required: true,
     },
     proxzeReview: {
       type: mongoose.Schema.Types.ObjectId,

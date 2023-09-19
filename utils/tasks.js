@@ -20,6 +20,7 @@ const taskCreator = async ({
   endDate,
   principal,
   user,
+  organization,
 }) => {
   const newTask = await Task.create({
     type,
@@ -45,6 +46,7 @@ const taskCreator = async ({
     startDate,
     endDate,
     principal,
+    organization,
     rating: getAverageRating(user.reviews),
     timeline: [{ status: "created", timestamp: Date.now() }],
   });
