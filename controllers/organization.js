@@ -196,7 +196,15 @@ const getBulkJob = async (req, res) => {
 
 const getAllBulkJobs = async (req, res) => {
   try {
-    const jobs = await BulkTask.find({ organization: req.params.id });
+    const jobs = await BulkTask.find({ organization: req.params.id })
+      .populate({
+        path: "createdBy",
+        select: "_id firstName lastName email avatar",
+      })
+      .populate({
+        path: "approvedBy",
+        select: "_id firstName lastName email avatar",
+      });
 
     return res.status(201).json({
       status: true,
