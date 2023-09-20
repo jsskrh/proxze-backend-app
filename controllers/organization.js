@@ -1,3 +1,4 @@
+const uuid = require("uuid");
 const User = require("../models/user");
 const Task = require("../models/task");
 const Organization = require("../models/organization");
@@ -44,7 +45,7 @@ const createOrg = async (req, res) => {
       certificateOfIncorporation,
       taxIdentificationNumber,
       owner: req.user.id,
-      members: [{ user: req.user.id, role: "Supervisor" }],
+      members: [{ user: req.user.id, role: "Supervisor", pending: false }],
     });
 
     return res.status(201).json({
@@ -92,6 +93,32 @@ const getOrgs = async (req, res) => {
     return res.status(500).json({
       status: true,
       message: `Unable to get organizations. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const addMember = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+
+    const organization = await Organization.findById(req.params.id);
+    const user = await User.findOne({ email });
+
+    const token = uuid.v5();
+
+    organization.members.push({ user: user._id, role, token });
+
+    await organization.save();
+
+    return res.status(201).json({
+      status: true,
+      message: "Member added successfully",
+      data: organization,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to add member. Please try again. \n Error: ${err}`,
     });
   }
 };

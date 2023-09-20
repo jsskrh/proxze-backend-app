@@ -8,6 +8,7 @@ const auth = require("../middleware/index");
 router.post("/", auth.authToken, Organization.createOrg);
 router.get("/", auth.authToken, Organization.getOrgs);
 router.get("/:id", auth.authToken, Organization.getOrg);
+router.post("/:id/members", auth.authToken, Organization.addMember);
 router.post("/:id/task", auth.authToken, Organization.createBulkJob);
 router.get("/:id/task", auth.authToken, Organization.getAllBulkJobs);
 router.put(

@@ -23,10 +23,9 @@ const organizationSchema = new mongoose.Schema(
           trim: true,
           enum: ["Officer", "Supervisor"],
         },
+        pending: { type: Boolean, default: false },
+        token: { type: String },
       },
-    ],
-    pending: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     ],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
