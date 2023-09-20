@@ -116,6 +116,7 @@ const addMember = async (req, res) => {
       data: organization,
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({
       status: true,
       message: `Unable to add member. Please try again. \n Error: ${err}`,
