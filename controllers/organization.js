@@ -261,6 +261,7 @@ module.exports = {
   createOrg,
   getOrg,
   getOrgs,
+  addMember,
   getBulkJob,
   getAllBulkJobs,
   createBulkJob,
