@@ -13,6 +13,7 @@ const chatRoutes = require("./routes/chats");
 const transactionRoutes = require("./routes/transactions");
 const organizationRoutes = require("./routes/organization");
 const notificationRoutes = require("./routes/notifications");
+const miscalleneousRoutes = require("./routes/miscalleneous");
 const { billingAlgorithmSeeder } = require("./utils/seed/billingAlgorithm");
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use("/api/task", taskRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notification", notificationRoutes);
 app.use("/api/organization", organizationRoutes);
+app.use("/api/miscalleneous", miscalleneousRoutes);
 // app.use("/api/ticket", ticketRoutes);
 // app.use("/api/review", reviewsRoutes);
 // app.use("/api/stream", streamRoutes);
