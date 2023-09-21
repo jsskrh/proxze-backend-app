@@ -5,6 +5,6 @@ const Miscalleneous = require("../controllers/miscalleneous");
 
 const auth = require("../middleware/index");
 
-router.post("/wake-server", Miscalleneous.wakeServer);
+router.get("/wake-server", Miscalleneous.wakeServer);
 
 module.exports = router;
