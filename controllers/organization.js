@@ -104,7 +104,9 @@ const addMember = async (req, res) => {
     const organization = await Organization.findById(req.params.id);
     const user = await User.findOne({ email });
 
-    const token = uuid.v5();
+    const token = uuid.v5(email, uuid.v5.DNS);
+
+    console.log({ user: user._id, role, token });
 
     organization.members.push({ user: user._id, role, token });
 
