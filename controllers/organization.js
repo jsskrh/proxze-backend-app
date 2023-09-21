@@ -104,9 +104,25 @@ const addMember = async (req, res) => {
     const organization = await Organization.findById(req.params.id);
     const user = await User.findOne({ email });
 
-    const token = uuid.v5(email, uuid.v5.DNS);
+    const isMember = organization.members.find((member) =>
+      user._id.equals(member.user)
+    );
 
-    console.log({ user: user._id, role, token });
+    if (user.userType === "proxze") {
+      return res.status(400).json({
+        status: true,
+        message: `Cannot add a proxze to an organization.`,
+      });
+    }
+
+    if (isMember) {
+      return res.status(400).json({
+        status: true,
+        message: `${user.firstName} ${user.lastName} is already a member.`,
+      });
+    }
+
+    const token = uuid.v5(email, uuid.v5.DNS);
 
     organization.members.push({ user: user._id, role, token });
 
