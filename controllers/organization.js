@@ -45,7 +45,7 @@ const createOrg = async (req, res) => {
       certificateOfIncorporation,
       taxIdentificationNumber,
       owner: req.user.id,
-      members: [{ user: req.user.id, role: "Supervisor", pending: false }],
+      members: [{ user: req.user.id, role: "owner", pending: false }],
     });
 
     return res.status(201).json({
@@ -63,7 +63,10 @@ const createOrg = async (req, res) => {
 
 const getOrg = async (req, res) => {
   try {
-    const organization = await Organization.findById(req.params.id);
+    const organization = await Organization.findById(req.params.id).populate({
+      path: "members",
+      populate: { path: "user", select: "_id firstName lastName email" },
+    });
 
     return res.status(201).json({
       status: true,

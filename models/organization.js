@@ -21,7 +21,7 @@ const organizationSchema = new mongoose.Schema(
           type: String,
           required: true,
           trim: true,
-          enum: ["officer", "supervisor"],
+          enum: ["officer", "supervisor", "owner"],
         },
         pending: { type: Boolean, default: false },
         token: { type: String },
