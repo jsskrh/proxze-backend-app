@@ -166,7 +166,8 @@ const getPendingRequests = async (req, res) => {
 };
 
 const getTask = async (req, res) => {
-  const taskId = req.params.taskId;
+  const { taskId } = req.params;
+
   try {
     const task = await Task.findById(taskId)
       .populate("principal")
@@ -320,22 +321,32 @@ const getTaskpool = async (req, res) => {
     const user = await User.findById(req.user.id);
     const userLocation = user.location;
 
-    const tasks = await Task.find({
-      // "timeline.status": "approved",
-      paymentStatus: false,
-      proxze: { $exists: false },
-      "location.geometry": {
-        $geoWithin: {
-          $centerSphere: [
-            [userLocation.coordinates[0], userLocation.coordinates[1]],
-            5 / 6371, // 5km radius in radians
-          ],
+    let tasks;
+
+    if (user.userType === "proxze") {
+      tasks = await Task.find({
+        // "timeline.status": "approved",
+        paymentStatus: false,
+        proxze: { $exists: false },
+        "location.geometry": {
+          $geoWithin: {
+            $centerSphere: [
+              [userLocation.coordinates[0], userLocation.coordinates[1]],
+              5 / 6371, // 5km radius in radians
+            ],
+          },
         },
-      },
-    }).sort({
-      createdAt: -1,
-    });
-    console.log(tasks);
+      }).sort({
+        createdAt: -1,
+      });
+    } else {
+      tasks = await Task.find({
+        paymentStatus: false,
+        proxze: { $exists: false },
+      }).sort({
+        createdAt: -1,
+      });
+    }
 
     const mappedTasks = tasks.map((task) => {
       return createTaskpoolObject(task);

@@ -582,10 +582,28 @@ const getDashboard = async (req, res) => {
   }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+
+    return res.status(201).json({
+      status: true,
+      message: "Users fetched",
+      data: users,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get users. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
   getUser,
+  getUsers,
   getDashboard,
   updateUserInfo,
   updatePaymentInfo,
