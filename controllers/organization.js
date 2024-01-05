@@ -5,7 +5,7 @@ const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
 const BulkTask = require("../models/bulkTask");
 const Tasks = require("../controllers/tasks");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const {

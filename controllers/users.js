@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const Task = require("../models/task");
 const Transaction = require("../models/transaction");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const sgMail = require("@sendgrid/mail");
@@ -12,6 +12,7 @@ const {
   sortDataByDate,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
+const { createVerificationMail } = require("../utils/mail");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -80,25 +81,41 @@ const createUser = async (req, res) => {
       },
     });
 
+    // const msg = {
+    //   to: result.email,
+    //   from: "no-reply@proxze.com",
+    //   subject: "Verify Your Email",
+    //   text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+    //   html: createVerificationMail({ firstName, email, encodedToken }),
+    // };
+
     const msg = {
       to: result.email,
-      from: "no-reply@proxze.com",
+      from: process.env.SGAPIMAIL,
       subject: "Verify Your Email",
-      text: `Please click on the following link to verify your email: ${process.env.NETLIFY_URL}/verify-email/${encodedToken}`,
-      html: `<p>Please click on the following link to verify your email: <a href="${process.env.NETLIFY_URL}/verify-email/${encodedToken}">${process.env.NETLIFY_URL}/verify-email/${verificationToken}</a></p>`,
+      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+      html: createVerificationMail({ firstName, email, encodedToken }),
     };
 
-    // await sgMail
-    //   .send(msg)
-    //   .then((response) => {
-    //     console.log(response[0].statusCode);
-    //     console.log(response[0].headers);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
+    await sgMail
+      .send(msg)
+      .then((response) => {
+        console.log(response[0].statusCode);
+        console.log(response[0].headers);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    console.log("after sendgrid");
 
-    transporter.sendMail(msg);
+    // await new Promise((resolve, reject) => {
+    //   transporter.sendMail(msg, (err, info) => {
+    //     if (err) {
+    //       return reject(err);
+    //     }
+    //     resolve("Email sent");
+    //   });
+    // });
 
     return res.status(201).json({
       status: true,
@@ -111,6 +128,27 @@ const createUser = async (req, res) => {
       message: `Unable to create user. Please try again. \n Error: ${err}`,
     });
   }
+};
+
+const sendCustomMailTemplate = async (email, firstName, encodedToken) => {
+  const msg = {
+    to: email,
+    from: process.env.SGAPIMAIL,
+    subject: "Verify Your Email",
+    text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+    html: createVerificationMail({ firstName, email, encodedToken }),
+  };
+
+  await sgMail
+    .send(msg)
+    .then((response) => {
+      console.log(response[0].statusCode);
+      console.log(response[0].headers);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  console.log("after sendgrid");
 };
 
 const verifyEmail = async (req, res) => {
@@ -137,6 +175,107 @@ const verifyEmail = async (req, res) => {
     return res.status(400).json({
       status: false,
       message: "Invalid or expired token.",
+    });
+  }
+};
+
+const resendToken = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: false,
+        message: "Email missing",
+      });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (!userExists) {
+      return res.status(400).json({
+        status: false,
+        message: "User does not exist",
+      });
+    }
+
+    if (userExists.isVerified) {
+      return res.status(400).json({
+        status: false,
+        message: "User is already verified",
+      });
+    }
+
+    const firstName = userExists.firstName;
+
+    const verificationToken = jwt.sign(
+      { email: email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(verificationToken);
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    // const msg = {
+    //   to: email,
+    //   from: "no-reply@proxze.com",
+    //   subject: "Verify Your Email",
+    //   text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+    //   html: createVerificationMail({ firstName, email, encodedToken }),
+    // };
+
+    const msg = {
+      to: email,
+      from: process.env.SGAPIMAIL,
+      subject: "Verify Your Email",
+      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+      html: createVerificationMail({ firstName, email, encodedToken }),
+    };
+
+    await sgMail
+      .send(msg)
+      .then((response) => {
+        console.log(response[0].statusCode);
+        console.log(response[0].headers);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    // await new Promise((resolve, reject) => {
+    //   transporter.sendMail(msg, (err, info) => {
+    //     if (err) {
+    //       return reject(err);
+    //     }
+    //     resolve("Email sent");
+    //   });
+    // });
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification email resent successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
     });
   }
 };
@@ -679,6 +818,7 @@ const getUsers = async (req, res) => {
 module.exports = {
   createUser,
   verifyEmail,
+  resendToken,
   loginUser,
   getUser,
   getUsers,
