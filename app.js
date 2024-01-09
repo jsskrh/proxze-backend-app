@@ -3,8 +3,10 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/users");
+const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/tasks");
 const chatRoutes = require("./routes/chats");
+const helpRoutes = require("./routes/help");
 // const streamRoutes = require("./routes/stream");
 // const ticketRoutes = require("./routes/tickets");
 // const reviewsRoutes = require("./routes/reviews");
@@ -46,12 +48,13 @@ mongoose
   });
 
 app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notification", notificationRoutes);
 app.use("/api/organization", organizationRoutes);
 app.use("/api/miscalleneous", miscalleneousRoutes);
-// app.use("/api/ticket", ticketRoutes);
+app.use("/api/help", helpRoutes);
 // app.use("/api/review", reviewsRoutes);
 // app.use("/api/stream", streamRoutes);
 // app.use("/api/paystack", paystackRoutes);
