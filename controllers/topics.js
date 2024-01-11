@@ -102,7 +102,6 @@ const setToRead = async (req, res) => {
 };
 
 module.exports = {
-  getAllNotifications,
   getUnseenNotifications,
   setToSeen,
   setToRead,
