@@ -320,10 +320,9 @@ const getTaskpool = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const userLocation = user.location;
-
     let tasks;
 
-    if (user.userType === "proxze") {
+    if (user.userType === "proxze" && userLocation.coordinates) {
       tasks = await Task.find({
         // "timeline.status": "approved",
         paymentStatus: false,
