@@ -18,6 +18,19 @@ const userSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
+    nin: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
+      validate: {
+        validator: function (v) {
+          return /^\d{11}$/.test(v);
+        },
+        message: (props) =>
+          `${props.value} is not a valid NIN. It must be an 11-digit number.`,
+      },
+    },
     password: {
       type: String,
       required: true,
@@ -68,6 +81,10 @@ const userSchema = new mongoose.Schema(
     },
     accountNumber: {
       type: String,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     isDisabled: {
       type: Boolean,

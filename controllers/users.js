@@ -4,6 +4,8 @@ const Transaction = require("../models/transaction");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const sgMail = require("@sendgrid/mail");
+const nodemailer = require("nodemailer");
 const {
   hideChars,
   getAverageRating,
@@ -11,25 +13,19 @@ const {
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 dotenv.config();
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const createUser = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
-      // address,
-      userType,
-    } = req.body;
+    const { firstName, lastName, email, password, phoneNumber, nin, userType } =
+      req.body;
     if (
       !firstName ||
       !lastName ||
       !email ||
       !password ||
       !phoneNumber ||
-      // !address ||
+      !nin ||
       !userType
     ) {
       return res.status(400).json({
@@ -53,10 +49,57 @@ const createUser = async (req, res) => {
       lastName,
       email,
       phoneNumber,
-      // address,
+      nin,
       userType,
       password: hashedPassword,
     });
+
+    const verificationToken = jwt.sign(
+      { email: result.email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(verificationToken);
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: result.email,
+      from: "no-reply@proxze.com",
+      subject: "Verify Your Email",
+      text: `Please click on the following link to verify your email: ${process.env.NETLIFY_URL}/verify-email/${encodedToken}`,
+      html: `<p>Please click on the following link to verify your email: <a href="${process.env.NETLIFY_URL}/verify-email/${encodedToken}">${process.env.NETLIFY_URL}/verify-email/${verificationToken}</a></p>`,
+    };
+
+    // await sgMail
+    //   .send(msg)
+    //   .then((response) => {
+    //     console.log(response[0].statusCode);
+    //     console.log(response[0].headers);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
+
+    transporter.sendMail(msg);
+
     return res.status(201).json({
       status: true,
       message: "User created successfully",
@@ -66,6 +109,34 @@ const createUser = async (req, res) => {
     return res.status(500).json({
       status: true,
       message: `Unable to create user. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const base64UrlDecode = (input) => {
+      return input.replace(/\(/g, ".");
+    };
+    const decodedToken = base64UrlDecode(token);
+    const decoded = jwt.verify(
+      decodedToken,
+      process.env.VERIFICATION_TOKEN_SECRET
+    );
+    const email = decoded.email;
+
+    await User.findOneAndUpdate({ email }, { isVerified: true });
+
+    return res.status(201).json({
+      status: true,
+      message: "Email verified successfully",
+    });
+  } catch (err) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid or expired token.",
     });
   }
 };
@@ -90,6 +161,13 @@ const loginUser = async (req, res) => {
     return res.status(401).json({
       status: false,
       message: "Account has been deactivated.",
+    });
+  }
+
+  if (!user.isVerified) {
+    return res.status(401).json({
+      status: false,
+      message: "Email has not been verified.",
     });
   }
 
@@ -601,6 +679,7 @@ const getUsers = async (req, res) => {
 
 module.exports = {
   createUser,
+  verifyEmail,
   loginUser,
   getUser,
   getUsers,
