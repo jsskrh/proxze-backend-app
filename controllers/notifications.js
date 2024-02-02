@@ -36,7 +36,6 @@ const getAllNotifications = async (req, res) => {
         amount: notification.amount,
       };
     });
-    console.log(notifications);
     return res.status(201).json({
       status: true,
       message: "All notifications fetched",

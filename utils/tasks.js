@@ -61,8 +61,6 @@ const taskCreator = async ({
     token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
   });
 
-  console.log(usersWithinRadius);
-
   const expo = new Expo();
   const notifications = [];
 

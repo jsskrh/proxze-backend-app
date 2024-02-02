@@ -174,7 +174,6 @@ const acceptBulkJob = async (req, res) => {
     const job = await BulkTask.findById(req.params.jobId).populate({
       path: "organization",
     });
-    console.log(job);
     const createdTasks = [];
 
     for (const obj of job.data) {

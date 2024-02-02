@@ -278,8 +278,6 @@ const getEarnings = async (req, res) => {
       transactionType: "CR",
     });
 
-    console.log(userId);
-
     // Step 2: Calculate the monthly earnings breakdown
     const monthlyEarnings = Array.from({ length: 12 }, (_, index) => {
       const monthIndex = currentMonth - 1 - index;

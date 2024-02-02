@@ -7,7 +7,6 @@ const sanitizeString = (str) => {
 };
 
 const handleSocketIO = (server) => {
-  console.log("socketIO");
   // const io = socketIO(server);
   const io = socketIO(server, {
     cors: {
@@ -110,8 +109,6 @@ const handleSocketIO = (server) => {
 
             var index = connections[key].indexOf(socket.id);
             connections[key].splice(index, 1);
-
-            console.log(key, socket.id, Math.ceil(diffTime / 1000));
 
             if (connections[key].length === 0) {
               delete connections[key];

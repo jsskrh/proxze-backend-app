@@ -382,7 +382,6 @@ const updatePassword = async (req, res) => {
 
 const updateLocation = async (req, res) => {
   const { location } = req.body;
-  console.log(req.body);
   try {
     await User.findByIdAndUpdate(req.user.id, {
       location: {

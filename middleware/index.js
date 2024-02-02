@@ -229,11 +229,6 @@ async function accessChat(req, res, next) {
       users: req.user.id,
     });
 
-    console.log({
-      _id: req.params.chatId,
-      users: req.user.id,
-    });
-
     if (chat) {
       return next();
     } else {
