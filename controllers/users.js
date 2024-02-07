@@ -12,7 +12,7 @@ const {
   sortDataByDate,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
-const { sendMail, createVerificationMail } = require("../utils/mail");
+const { createVerificationMail } = require("../utils/mail");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 

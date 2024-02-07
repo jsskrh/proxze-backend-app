@@ -1,35 +1,35 @@
 const dotenv = require("dotenv");
-var aws = require("aws-sdk");
+// var aws = require("aws-sdk");
 const nodemailer = require("nodemailer");
 dotenv.config();
-const endpoint = new aws.Endpoint(process.env.AWS_SES_ENDPOINT);
-const ses = new aws.SES({ region: process.env.AWS_BUCKET_REGION, endpoint });
+// const endpoint = new aws.Endpoint(process.env.AWS_SES_ENDPOINT);
+// const ses = new aws.SES({ region: process.env.AWS_BUCKET_REGION, endpoint });
 
-async function sendMail(subject, text, html, destination, msg) {
-  console.log(msg);
+// async function sendMail(subject, text, html, destination, msg) {
+//   console.log(msg);
 
-  const emailParams = {
-    Destination: {
-      ToAddresses: destination,
-    },
-    Message: {
-      Body: {
-        Text: { Data: text },
-        Html: { Data: html },
-      },
-      Subject: { Data: subject },
-    },
-    Source: process.env.MAIL_USER,
-  };
+//   const emailParams = {
+//     Destination: {
+//       ToAddresses: destination,
+//     },
+//     Message: {
+//       Body: {
+//         Text: { Data: text },
+//         Html: { Data: html },
+//       },
+//       Subject: { Data: subject },
+//     },
+//     Source: process.env.MAIL_USER,
+//   };
 
-  try {
-    let key = await ses.sendEmail(emailParams).promise();
-    console.log("Mail sent");
-  } catch (e) {
-    console.log("Mail failed to send", e);
-  }
-  return;
-}
+//   try {
+//     let key = await ses.sendEmail(emailParams).promise();
+//     console.log("Mail sent");
+//   } catch (e) {
+//     console.log("Mail failed to send", e);
+//   }
+//   return;
+// }
 
 const createVerificationMail = ({
   firstName,
@@ -1420,4 +1420,4 @@ const createVerificationMail = ({
     `;
 };
 
-module.exports = { sendMail, createVerificationMail };
+module.exports = { createVerificationMail };
