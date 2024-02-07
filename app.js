@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const path = require("path");
 const userRoutes = require("./routes/users");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/tasks");
@@ -23,6 +24,8 @@ const app = express();
 
 app.use(express.json());
 
+const tlsCAFilePath = path.resolve(__dirname, "global-bundle.pem");
+
 const corsOptions = {
   origin: "*",
   // origin: "http://localhost:5173",
@@ -30,23 +33,27 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-const uri =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/my_proxze_app";
+const uri = process.env.MONGODB_URI;
 
 mongoose.set("strictQuery", false);
 mongoose
   .connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    // tls: true,
+    // tlsCAFile: tlsCAFilePath,
   })
   .then(() => {
     console.log("Successfully connected to Database.");
     // billingAlgorithmSeeder();
   })
   .catch((err) => {
-    console.log("Unable to connect to Database.", err);
+    console.error("Unable to connect to Database.", err);
   });
 
+app.get("/hello", (req, res) => {
+  res.send("Hello World!");
+});
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/task", taskRoutes);

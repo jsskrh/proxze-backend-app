@@ -12,7 +12,7 @@ const {
   sortDataByDate,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
-const { createVerificationMail } = require("../utils/mail");
+const { sendMail, createVerificationMail } = require("../utils/mail");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -81,32 +81,31 @@ const createUser = async (req, res) => {
       },
     });
 
-    // const msg = {
-    //   to: result.email,
-    //   from: "no-reply@proxze.com",
-    //   subject: "Verify Your Email",
-    //   text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-    //   html: createVerificationMail({ firstName, email, encodedToken }),
-    // };
-
     const msg = {
       to: result.email,
-      from: process.env.SGAPIMAIL,
+      from: process.env.MAIL_USER,
       subject: "Verify Your Email",
       text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
       html: createVerificationMail({ firstName, email, encodedToken }),
     };
 
-    await sgMail
-      .send(msg)
-      .then((response) => {
-        console.log(response[0].statusCode);
-        console.log(response[0].headers);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    console.log("after sendgrid");
+    // sendMail(
+    //   msg.subject,
+    //   msg.text,
+    //   createVerificationMail({ firstName, email, encodedToken }),
+    //   [result.email],
+    //   msg
+    // );
+
+    // await sgMail
+    //   .send(msg)
+    //   .then((response) => {
+    //     console.log(response[0].statusCode);
+    //     console.log(response[0].headers);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
 
     // await new Promise((resolve, reject) => {
     //   transporter.sendMail(msg, (err, info) => {
@@ -133,21 +132,21 @@ const createUser = async (req, res) => {
 const sendCustomMailTemplate = async (email, firstName, encodedToken) => {
   const msg = {
     to: email,
-    from: process.env.SGAPIMAIL,
+    from: process.env.MAIL_USER,
     subject: "Verify Your Email",
     text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
     html: createVerificationMail({ firstName, email, encodedToken }),
   };
 
-  await sgMail
-    .send(msg)
-    .then((response) => {
-      console.log(response[0].statusCode);
-      console.log(response[0].headers);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+  // await sgMail
+  //   .send(msg)
+  //   .then((response) => {
+  //     console.log(response[0].statusCode);
+  //     console.log(response[0].headers);
+  //   })
+  //   .catch((error) => {
+  //     console.error(error);
+  //   });
   console.log("after sendgrid");
 };
 
@@ -233,31 +232,31 @@ const resendToken = async (req, res) => {
       },
     });
 
-    // const msg = {
-    //   to: email,
-    //   from: "no-reply@proxze.com",
-    //   subject: "Verify Your Email",
-    //   text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-    //   html: createVerificationMail({ firstName, email, encodedToken }),
-    // };
-
     const msg = {
       to: email,
-      from: process.env.SGAPIMAIL,
+      from: process.env.MAIL_USER,
       subject: "Verify Your Email",
       text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
       html: createVerificationMail({ firstName, email, encodedToken }),
     };
 
-    await sgMail
-      .send(msg)
-      .then((response) => {
-        console.log(response[0].statusCode);
-        console.log(response[0].headers);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    // sendMail(
+    //   msg.subject,
+    //   msg.text,
+    //   createVerificationMail({ firstName, email, encodedToken }),
+    //   [email],
+    //   msg
+    // );
+
+    // await sgMail
+    //   .send(msg)
+    //   .then((response) => {
+    //     console.log(response[0].statusCode);
+    //     console.log(response[0].headers);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
 
     // await new Promise((resolve, reject) => {
     //   transporter.sendMail(msg, (err, info) => {
@@ -267,6 +266,88 @@ const resendToken = async (req, res) => {
     //     resolve("Email sent");
     //   });
     // });
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification email resent successfully",
+      data: { email, firstName },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const sendVerificationToken = async (req, res) => {
+  try {
+    const { email, firstName } = req.body;
+
+    if (!email || !firstName) {
+      return res.status(400).json({
+        status: false,
+        message: "Email missing",
+      });
+    }
+
+    const verificationToken = jwt.sign(
+      { email: email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(verificationToken);
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Verify Your Email",
+      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://www.proxze.com/verify-email/${encodedToken}`,
+      html: createVerificationMail({
+        firstName,
+        email,
+        encodedToken,
+        liveUrl: "https://www.proxze.com",
+      }),
+    };
+
+    // await sgMail
+    //   .send(msg)
+    //   .then((response) => {
+    //     console.log(response[0].statusCode);
+    //     console.log(response[0].headers);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //   });
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve("Email sent");
+      });
+    });
 
     return res.status(201).json({
       status: true,
@@ -818,6 +899,7 @@ const getUsers = async (req, res) => {
 module.exports = {
   createUser,
   verifyEmail,
+  sendVerificationToken,
   resendToken,
   loginUser,
   getUser,

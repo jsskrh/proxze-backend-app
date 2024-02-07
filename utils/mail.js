@@ -1,7 +1,42 @@
 const dotenv = require("dotenv");
+var aws = require("aws-sdk");
+const nodemailer = require("nodemailer");
 dotenv.config();
+const endpoint = new aws.Endpoint(process.env.AWS_SES_ENDPOINT);
+const ses = new aws.SES({ region: process.env.AWS_BUCKET_REGION, endpoint });
 
-const createVerificationMail = ({ firstName, encodedToken, email }) => {
+async function sendMail(subject, text, html, destination, msg) {
+  console.log(msg);
+
+  const emailParams = {
+    Destination: {
+      ToAddresses: destination,
+    },
+    Message: {
+      Body: {
+        Text: { Data: text },
+        Html: { Data: html },
+      },
+      Subject: { Data: subject },
+    },
+    Source: process.env.MAIL_USER,
+  };
+
+  try {
+    let key = await ses.sendEmail(emailParams).promise();
+    console.log("Mail sent");
+  } catch (e) {
+    console.log("Mail failed to send", e);
+  }
+  return;
+}
+
+const createVerificationMail = ({
+  firstName,
+  encodedToken,
+  email,
+  liveUrl,
+}) => {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http:/= /www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html
       xmlns="http://www.w3.org/1999/xhtml"
@@ -425,7 +460,7 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                     <tr>
                       <td align="center" class="shell">
                         <a
-                          href="${process.env.CLIENT_URL}"
+                          href="${liveUrl ?? process.env.CLIENT_URL}"
                           class="disabled-plaintext"
                           data-testid="logo"
                           style="color: inherit"
@@ -613,7 +648,9 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                       >
                                         <a
                                           class="h5"
-                                          href="${process.env.CLIENT_URL}/verify-email/${encodedToken}"
+                                          href="${
+                                            liveUrl ?? process.env.CLIENT_URL
+                                          }/verify-email/${encodedToken}"
                                           style="
                                             font-family: ProxzeSans-Bold, Helvetica,
                                               Roboto, Segoe UI, sans-serif;
@@ -683,9 +720,13 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                 If that doesn&#x27;t work, copy and paste the
                                 following link in your browser:<br />
                                 <a
-                                  href="${process.env.CLIENT_URL}/verify-email/${encodedToken}"
+                                  href="${
+                                    liveUrl ?? process.env.CLIENT_URL
+                                  }/verify-email/${encodedToken}"
                                   style="color: inherit; text-decoration: underline"
-                                  >${process.env.CLIENT_URL}/verify-email/${encodedToken}</a
+                                  >${
+                                    liveUrl ?? process.env.CLIENT_URL
+                                  }/verify-email/${encodedToken}</a
                                 >
                               </td>
                             </tr>
@@ -718,13 +759,17 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                               >
                                 We&#x27;re here to help if you need it. Visit the
                                 <a
-                                  href="${process.env.CLIENT_URL}/help/customer"
+                                  href="${
+                                    liveUrl ?? process.env.CLIENT_URL
+                                  }/help/customer"
                                   style="color: inherit; text-decoration: underline"
                                   >Help Center</a
                                 >
                                 for more info or
                                 <a
-                                  href="${process.env.CLIENT_URL}/help/customer/csp"
+                                  href="${
+                                    liveUrl ?? process.env.CLIENT_URL
+                                  }/help/customer/csp"
                                   style="color: inherit; text-decoration: underline"
                                   >contact us</a
                                 >.
@@ -860,7 +905,9 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                       >
                                         <a
                                           class="h5"
-                                          href="${process.env.CLIENT_URL}"
+                                          href="${
+                                            liveUrl ?? process.env.CLIENT_URL
+                                          }"
                                           style="
                                             font-family: ProxzeSans-Bold, Helvetica,
                                               Roboto, Segoe UI, sans-serif;
@@ -1018,7 +1065,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           >By joining Proxze,
                                                           you&#x27;ve agreed to our
                                                           <a
-                                                            href="${process.env.CLIENT_URL}/terms-of-use"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }/terms-of-use"
                                                             style="
                                                               text-decoration: underline;
                                                               color: #4d4d4d;
@@ -1027,7 +1078,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           >
                                                           and
                                                           <a
-                                                            href="${process.env.CLIENT_URL}/privacy-policy"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }/privacy-policy"
                                                             style="
                                                               text-decoration: underline;
                                                               color: #4d4d4d;
@@ -1036,7 +1091,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           >.<br /><br />Please
                                                           review the
                                                           <a
-                                                            href="${process.env.CLIENT_URL}/privacy-policy"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }/privacy-policy"
                                                             style="
                                                               text-decoration: underline;
                                                               color: #4d4d4d;
@@ -1047,7 +1106,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           personal information, and
                                                           go to your
                                                           <a
-                                                            href="${process.env.CLIENT_URL}/settings/contact-info"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }/settings/contact-info"
                                                             style="
                                                               text-decoration: underline;
                                                               color: #4d4d4d;
@@ -1112,7 +1175,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                         <span class="ignore-diff"
                                                           >Questions? Visit the
                                                           <a
-                                                            href="${process.env.CLIENT_URL}/help/customer"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }/help/customer"
                                                             style="
                                                               text-decoration: underline;
                                                               color: #a4a4a4;
@@ -1159,7 +1226,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                             text-decoration: none;
                                                           "
                                                           ><a
-                                                            href="${process.env.CLIENT_URL}"
+                                                            href="${
+                                                              liveUrl ??
+                                                              process.env
+                                                                .CLIENT_URL
+                                                            }"
                                                             style="
                                                               color: #a4a4a4;
                                                               cursor: pointer;
@@ -1203,13 +1274,21 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                       >
                                                         <a
                                                           class="footer-link"
-                                                          href="${process.env.CLIENT_URL}/settings/notification"
+                                                          href="${
+                                                            liveUrl ??
+                                                            process.env
+                                                              .CLIENT_URL
+                                                          }/settings/notification"
                                                           styl="e"
                                                           ="text-decoration: underline; line-height: 20px; color: #a4a4a4;"
                                                           >Notification Settings</a
                                                         ><br /><a
                                                           class="footer-link"
-                                                          href="${process.env.CLIENT_URL}/terms-of-use"
+                                                          href="${
+                                                            liveUrl ??
+                                                            process.env
+                                                              .CLIENT_URL
+                                                          }/terms-of-use"
                                                           style="
                                                             text-decoration: underline;
                                                             line-height: 20px;
@@ -1218,7 +1297,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           >Terms of Use</a
                                                         ><br /><a
                                                           class="footer-link"
-                                                          href="${process.env.CLIENT_URL}/privacy-policy"
+                                                          href="${
+                                                            liveUrl ??
+                                                            process.env
+                                                              .CLIENT_URL
+                                                          }/privacy-policy"
                                                           style="
                                                             text-decoration: underline;
                                                             line-height: 20px;
@@ -1227,7 +1310,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                           >Privacy</a
                                                         ><br /><a
                                                           class="footer-link"
-                                                          href="${process.env.CLIENT_URL}/help/customer"
+                                                          href="${
+                                                            liveUrl ??
+                                                            process.env
+                                                              .CLIENT_URL
+                                                          }/help/customer"
                                                           style="
                                                             text-decoration: underline;
                                                             line-height: 20px;
@@ -1266,7 +1353,11 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
                                                       >
                                                         This message was mailed to
                                                         <a
-                                                          href="${process.env.CLIENT_URL}"
+                                                          href="${
+                                                            liveUrl ??
+                                                            process.env
+                                                              .CLIENT_URL
+                                                          }"
                                                           class="hide-link ignore-diff"
                                                           style="
                                                             cursor: text;
@@ -1329,4 +1420,4 @@ const createVerificationMail = ({ firstName, encodedToken, email }) => {
     `;
 };
 
-module.exports = { createVerificationMail };
+module.exports = { sendMail, createVerificationMail };
