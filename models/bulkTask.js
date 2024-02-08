@@ -7,7 +7,12 @@ const bulkTaskSchema = new mongoose.Schema(
       ref: "Organization",
       required: true,
     },
-    bill: { type: Number, required: true, trim: true },
+    bill: {
+      rate: { type: Number, trim: true },
+      subtotal: { type: Number, trim: true },
+      serviceFee: { type: Number, trim: true },
+      total: { type: Number, trim: true },
+    },
     status: {
       type: String,
       default: "pending",
@@ -19,11 +24,18 @@ const bulkTaskSchema = new mongoose.Schema(
       required: true,
     },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    data: [],
-    // data: {
-    //   type: String,
-    //   required: true,
-    // },
+    data: [
+      {
+        name: { type: String, required: true },
+        address: { type: String, required: true },
+        gender: { type: String, required: true },
+        status: {
+          type: String,
+          default: "pending",
+          enum: ["pending", "approved", "rejected"],
+        },
+      },
+    ],
     tasks: [
       {
         type: mongoose.Schema.Types.ObjectId,
