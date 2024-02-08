@@ -456,9 +456,15 @@ const getUser = async (req, res) => {
       lga: user.lga,
       balance: user.balance,
       avatar: user.avatar,
-      bank: user.userBank,
+      paymentInfo: {
+        bank: user.paymentInfo?.bank,
+        accountName: user.paymentInfo?.accountName,
+        bankCode: user.paymentInfo?.bankCode,
+        accountNumber:
+          user.paymentInfo?.accountNumber &&
+          hideChars(user.paymentInfo?.accountNumber),
+      },
       rating: getAverageRating(user.reviews),
-      accountNumber: user.accountNumber && hideChars(user.accountNumber),
       postalCode: user.postalCode,
     };
     res.status(201).send(userData);
@@ -549,11 +555,15 @@ const updateUserInfo = async (req, res) => {
 };
 
 const updatePaymentInfo = async (req, res) => {
-  const { oldAccountNumber, newAccountNumber, bank } = req.body;
+  const { oldAccountNumber, accountNumber, bank, bankCode, accountName } =
+    req.body;
 
   try {
     const user = await User.findById(req.user.id);
-    if (user.accountNumber && oldAccountNumber !== user.accountNumber) {
+    if (
+      user.paymentInfo.accountNumber &&
+      oldAccountNumber !== user.paymentInfo.accountNumber
+    ) {
       return res.status(401).json({
         status: false,
         message: "Incorrect old account number.",
@@ -562,19 +572,21 @@ const updatePaymentInfo = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { accountNumber: newAccountNumber, userBank: bank },
+      { paymentInfo: { accountNumber, bank, bankCode, accountName } },
       { new: true }
     );
 
     const userData = {
-      bank: updatedUser.userBank,
-      accountNumber: hideChars(updatedUser.accountNumber),
+      bank: updatedUser.paymentInfo.bank,
+      accountNumber: hideChars(updatedUser.paymentInfo.accountNumber),
     };
+    console.log(userData);
     res.status(200).send(userData);
-  } catch (error) {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Unable to update payment info. Please try again. \n Error: ${err}`,
     });
   }
 };

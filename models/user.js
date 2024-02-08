@@ -83,6 +83,20 @@ const userSchema = new mongoose.Schema(
     accountNumber: {
       type: String,
     },
+    paymentInfo: {
+      bank: {
+        type: String,
+      },
+      bankCode: {
+        type: String,
+      },
+      accountNumber: {
+        type: String,
+      },
+      accountName: {
+        type: String,
+      },
+    },
     isVerified: {
       type: Boolean,
       default: false,
