@@ -146,6 +146,86 @@ async function isAdmin(req, res, next) {
   }
 }
 
+async function isAccManager(req, res, next) {
+  try {
+    const user = await User.findById(req.user.id);
+    if (user.userType === "manager" || user.userType === "admin") {
+      return next();
+    } else {
+      return res.status(401).json({
+        status: false,
+        message: "You are not authorized",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+}
+
+async function isOrgMember(req, res, next) {
+  try {
+    const org = await Organisation.findOne({
+      _id: req.params.orgId,
+      "members.user": req.user.id,
+    });
+    if (org) {
+      return next();
+    } else {
+      return res.status(401).json({
+        status: false,
+        message: "You are not authorized",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+}
+
+function orgToken(req, res, next) {
+  if (
+    !req.body.token &&
+    !req.query.token &&
+    !req.headers["x-access-token"] &&
+    !req.headers["authorization"]
+  ) {
+    return res.status(404).json({
+      status: false,
+      message: "User not authenticated",
+    });
+  }
+
+  const authHeader = req.headers["authorization"];
+
+  const token =
+    req.body.token ||
+    req.query.token ||
+    req.headers["x-access-token"] ||
+    authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(403).json({
+      status: false,
+      message: "A token is required for authentication",
+    });
+  }
+  try {
+    const org = jwt.verify(token, process.env.ENTERPRISE_ACCESS_TOKEN);
+    req.org = org;
+  } catch (err) {
+    return res.status(401).json({
+      status: false,
+      message: "Invalid Token",
+    });
+  }
+  return next();
+}
+
 async function isOwnerPrincipal(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
@@ -250,6 +330,9 @@ module.exports = {
   authToken,
   passwordCheck,
   isAdmin,
+  isAccManager,
+  orgToken,
+  isOrgMember,
   isPrincipal,
   isProxze,
   isOwnerPrincipal,

@@ -5,23 +5,57 @@ const Organization = require("../controllers/organization");
 
 const auth = require("../middleware/index");
 
-router.post("/", auth.authToken, Organization.createOrg);
-router.get("/", auth.authToken, Organization.getOrgs);
-router.get("/:id", auth.authToken, Organization.getOrg);
-router.post("/:id/members", auth.authToken, Organization.addMember);
-router.post("/:id/task", auth.authToken, Organization.createBulkJob);
-router.get("/:id/task", auth.authToken, Organization.getAllBulkJobs);
-router.put(
-  "/:id/task/:jobId/accept",
+router.get(
+  "/requests",
   auth.authToken,
-  Organization.acceptBulkJob
+  auth.isPrincipal,
+  Organization.getOrgReq
+);
+router.post(
+  "/requests",
+  auth.authToken,
+  auth.isPrincipal,
+  Organization.createOrgReq
+);
+router.get("/orgs", auth.authToken, auth.isPrincipal, Organization.getOrgs);
+router.put(
+  "/orgs/:orgId/members/accept",
+  auth.authToken,
+  auth.isOrgMember,
+  Organization.acceptMembership
 );
 router.put(
-  "/:id/task/:jobId/reject",
+  "/orgs/:orgId/members/reject",
   auth.authToken,
-  Organization.removeBulkJob
+  auth.isOrgMember,
+  Organization.rejectMembership
 );
-router.get("/:id/task/:jobId", auth.authToken, Organization.getBulkJob);
+router.get(
+  "/orgs/:orgId",
+  auth.authToken,
+  auth.isOrgMember,
+  Organization.getOrg
+);
+router.post(
+  "/orgs/:orgId/login",
+  auth.authToken,
+  auth.isOrgMember,
+  Organization.orgLogin
+);
+router.put("/orgs/:orgId/members", auth.orgToken, Organization.addMember);
+// router.post("/:id/task", auth.authToken, Organization.createBulkJob);
+// router.get("/:id/task", auth.authToken, Organization.getAllBulkJobs);
+// router.put(
+//   "/:id/task/:jobId/accept",
+//   auth.authToken,
+//   Organization.acceptBulkJob
+// );
+// router.put(
+//   "/:id/task/:jobId/reject",
+//   auth.authToken,
+//   Organization.removeBulkJob
+// );
+// router.get("/:id/task/:jobId", auth.authToken, Organization.getBulkJob);
 // router.delete("/:id/task/:jobId", auth.authToken, Organization.deleteBulkJob);
 
 module.exports = router;

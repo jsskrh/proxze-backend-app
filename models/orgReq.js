@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
+const { states } = require("../utils/stateMachines/orgReq");
 
 const orgReqSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    rcNumber: { type: String, required: true, trim: true },
+    rCNumber: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true },
     phoneNumber: { type: String, required: true, trim: true },
     address: { type: String, required: true, trim: true },
@@ -18,8 +19,8 @@ const orgReqSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "waiting",
-      enum: ["waiting", "pending", "approved", "rejected"],
+      default: "pending",
+      enum: Object.values(states),
     },
   },
   { timestamps: true }

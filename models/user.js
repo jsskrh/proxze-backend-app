@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema(
     userType: {
       type: String,
       required: true,
+      enum: ["proxze", "principal", "admin", "support", "manager"],
     },
     balance: {
       type: mongoose.Decimal128,
