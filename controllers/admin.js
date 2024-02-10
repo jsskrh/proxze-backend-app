@@ -540,12 +540,38 @@ const getDashboard = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const { page = 1, search, userType } = req.query;
+    const perPage = 15;
+    let query = {};
+
+    query = {
+      $and: [
+        {
+          $or: [
+            { firstName: { $regex: search, $options: "i" } },
+            { lastName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    if (userType !== undefined && userType !== "") {
+      query.$and.push({ userType });
+    }
+
+    console.log(query);
+
+    const users = await User.find(query)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+    const count = await User.countDocuments(query);
+    const hasNextPage = page * perPage < count;
 
     return res.status(201).json({
       status: true,
       message: "Users fetched",
-      data: users,
+      data: { count, users, hasNextPage },
     });
   } catch (err) {
     return res.status(500).json({
