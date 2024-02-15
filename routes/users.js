@@ -11,7 +11,7 @@ router.post("/resend-token", Users.resendToken);
 router.post("/send-token", Users.sendVerificationToken);
 router.post("/login", Users.loginUser);
 router.put("/location", auth.authToken, Users.updateLocation);
-router.get("/profile", auth.authToken, Users.getUser);
+router.get("/profile", auth.authToken, Users.getProfile);
 router.get("/dashboard", auth.authToken, Users.getDashboard);
 router.put("/settings/user-info", auth.authToken, Users.updateUserInfo);
 router.put(
