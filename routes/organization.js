@@ -43,19 +43,19 @@ router.post(
   Organization.orgLogin
 );
 router.put("/orgs/:orgId/members", auth.orgToken, Organization.addMember);
-// router.post("/:id/task", auth.authToken, Organization.createBulkJob);
-// router.get("/:id/task", auth.authToken, Organization.getAllBulkJobs);
-// router.put(
-//   "/:id/task/:jobId/accept",
-//   auth.authToken,
-//   Organization.acceptBulkJob
-// );
+router.post("/orgs/:orgId/jobs", auth.orgToken, Organization.createBulkJob);
+router.get("/orgs/:orgId/jobs", auth.orgToken, Organization.getAllBulkJobs);
+router.put(
+  "/orgs/:orgId/jobs/:jobId/accept",
+  auth.orgToken,
+  Organization.acceptBulkJob
+);
 // router.put(
 //   "/:id/task/:jobId/reject",
 //   auth.authToken,
 //   Organization.removeBulkJob
 // );
-// router.get("/:id/task/:jobId", auth.authToken, Organization.getBulkJob);
+router.get("/orgs/:orgId/jobs/:jobId", auth.authToken, Organization.getBulkJob);
 // router.delete("/:id/task/:jobId", auth.authToken, Organization.deleteBulkJob);
 
 module.exports = router;

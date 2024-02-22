@@ -560,8 +560,6 @@ const getUsers = async (req, res) => {
       query.$and.push({ userType });
     }
 
-    console.log(query);
-
     const users = await User.find(query)
       .skip((page - 1) * perPage)
       .limit(perPage);

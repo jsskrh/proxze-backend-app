@@ -22,6 +22,7 @@ const taskCreator = async ({
   user,
   organization,
 }) => {
+  console.log(type, description, bill, location);
   const newTask = await Task.create({
     type,
     description,

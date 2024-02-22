@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const Task = require("../models/task");
 const Chat = require("../models/chat");
+const Organization = require("../models/organization");
 
 function authToken(req, res, next) {
   if (
@@ -167,7 +168,7 @@ async function isAccManager(req, res, next) {
 
 async function isOrgMember(req, res, next) {
   try {
-    const org = await Organisation.findOne({
+    const org = await Organization.findOne({
       _id: req.params.orgId,
       "members.user": req.user.id,
     });
@@ -215,8 +216,8 @@ function orgToken(req, res, next) {
     });
   }
   try {
-    const org = jwt.verify(token, process.env.ENTERPRISE_ACCESS_TOKEN);
-    req.org = org;
+    const user = jwt.verify(token, process.env.ENTERPRISE_ACCESS_TOKEN);
+    req.user = user;
   } catch (err) {
     return res.status(401).json({
       status: false,

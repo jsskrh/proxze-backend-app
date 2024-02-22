@@ -29,6 +29,13 @@ const bulkTaskSchema = new mongoose.Schema(
         name: { type: String, required: true },
         address: { type: String, required: true },
         gender: { type: String, required: true },
+        location: {
+          label: { type: String, required: true, trim: true },
+          coords: {
+            lat: { type: Number, required: true, trim: true },
+            lng: { type: Number, required: true, trim: true },
+          },
+        },
         status: {
           type: String,
           default: "pending",

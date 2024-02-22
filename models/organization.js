@@ -11,7 +11,7 @@ const memberSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ["officer", "supervisor"],
+      enum: ["officer", "supervisor", "accountManager"],
     },
     status: {
       type: String,

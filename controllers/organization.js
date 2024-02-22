@@ -150,7 +150,10 @@ const processOrgReq = async (req, res) => {
         address: request.address,
         accountManager: request.accountManager,
         request: reqId,
-        members: [{ user: request.initiator, role: "supervisor" }],
+        members: [
+          { user: request.initiator, role: "supervisor" },
+          { user: request.accountManager, role: "accountManager" },
+        ],
       });
     }
 
@@ -189,7 +192,7 @@ const acceptMembership = async (req, res) => {
     const updatedOrg = await Organization.findOneAndUpdate(
       {
         _id: orgId,
-        "members.email": user.email,
+        "members.user": req.user.id,
       },
       {
         $set: {
@@ -260,7 +263,9 @@ const orgLogin = async (req, res) => {
       });
     }
 
-    const orgUser = org.members.find((member) => member.email === user.email);
+    const orgUser = org.members.find((member) =>
+      member.user.equals(req.user.id)
+    );
 
     if (orgUser.status !== "accepted") {
       return res.status(401).json({
@@ -270,7 +275,7 @@ const orgLogin = async (req, res) => {
     }
 
     if (await bcrypt.compare(req.body.password, orgUser.orgPass)) {
-      const accessToken = jwt.sign(
+      const orgToken = jwt.sign(
         { userId: user._id, orgId: org._id, role: orgUser.role },
         process.env.ENTERPRISE_ACCESS_TOKEN
       );
@@ -278,14 +283,15 @@ const orgLogin = async (req, res) => {
       return res.status(200).json({
         status: true,
         message: "Member logged in successfully",
+        data: { orgToken },
       });
     } else {
       res.status(401).send("Invalid Credentials");
     }
-  } catch (error) {
+  } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to loginto organization. Please try again. \n Error: ${err}`,
+      message: `Unable to login to organization. Please try again. \n Error: ${err}`,
     });
   }
 };
@@ -304,8 +310,8 @@ const addMember = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.org.userId);
-    const org = await Organization.findById(req.org.orgId);
+    const user = await User.findById(req.user.userId);
+    const org = await Organization.findById(req.user.orgId);
 
     if (!org) {
       return res.status(401).json({
@@ -385,12 +391,11 @@ const getOrgs = async (req, res) => {
 
 const createBulkJob = async (req, res) => {
   try {
-    const { bill, data } = req.body;
+    const { data } = req.body;
 
     const bulkTask = await BulkTask.create({
-      organization: req.params.id,
+      organization: req.params.orgId,
       createdBy: req.user.id,
-      bill,
       data,
     });
 
@@ -409,14 +414,23 @@ const createBulkJob = async (req, res) => {
 
 const acceptBulkJob = async (req, res) => {
   try {
+    const { rate } = req.body;
+
     const job = await BulkTask.findById(req.params.jobId).populate({
       path: "organization",
     });
     const createdTasks = [];
+    let currentDate = new Date();
+    let futureDate = new Date(currentDate);
+    futureDate.setDate(currentDate.getDate() + 7);
 
     for (const obj of job.data) {
       const newTask = await taskCreator({
-        ...obj,
+        startDate: currentDate,
+        endDate: futureDate,
+        location: obj.location,
+        description: `Verify ${obj.name}, ${obj.gender}`,
+        bill: rate,
         type: "Verification",
         user: job.organization,
         principal: job.createdBy,
@@ -424,6 +438,12 @@ const acceptBulkJob = async (req, res) => {
       });
       createdTasks.push(newTask._id);
     }
+    job.bill = {
+      rate,
+      subtotal: rate * job.data.length,
+      serviceFee: 2000,
+      total: rate * job.data.length + 2000,
+    };
     job.status = "approved";
     job.approvedBy = req.user.id;
     job.tasks = createdTasks;
@@ -435,6 +455,7 @@ const acceptBulkJob = async (req, res) => {
       return: job,
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({
       status: true,
       message: `Unable to accept bulk tasks. Please try again. \n Error: ${err}`,
@@ -482,7 +503,9 @@ const getBulkJob = async (req, res) => {
 
 const getAllBulkJobs = async (req, res) => {
   try {
-    const jobs = await BulkTask.find({ organization: req.params.id }).populate({
+    const jobs = await BulkTask.find({
+      organization: req.params.orgId,
+    }).populate({
       path: "createdBy",
       select: "_id firstName lastName email avatar",
     });
