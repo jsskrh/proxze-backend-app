@@ -307,33 +307,14 @@ const loginUser = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    const userData = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      userType: user.userType,
-      bio: user.bio,
-      phoneNumber: user.phoneNumber,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-      lga: user.lga,
-      balance: user.balance,
-      avatar: user.avatar,
-      paymentInfo: {
-        bank: user.paymentInfo?.bank,
-        accountName: user.paymentInfo?.accountName,
-        bankCode: user.paymentInfo?.bankCode,
-        accountNumber:
-          user.paymentInfo?.accountNumber &&
-          hideChars(user.paymentInfo?.accountNumber),
-      },
-      rating: getAverageRating(user.reviews),
-      postalCode: user.postalCode,
-    };
-    res.status(201).send(userData);
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    return res.status(201).json({
+      status: true,
+      message: "User fetched successfully",
+      data: user,
+    });
   } catch (error) {
     res.status(500).send(error);
   }
@@ -511,7 +492,23 @@ const deactivateAccount = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Unable to deactivate account. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id);
+
+    return res.status(201).json({
+      status: true,
+      message: "User successfully deleted",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to delete account. Please try again. \n Error: ${err}`,
     });
   }
 };
@@ -592,4 +589,5 @@ module.exports = {
   updatePassword,
   updateLocation,
   deactivateAccount,
+  deleteAccount,
 };

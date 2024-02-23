@@ -443,7 +443,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-const getUser = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const userData = {
@@ -606,7 +606,7 @@ const updatePassword = async (req, res) => {
 
     return res.status(201).json({
       status: true,
-      message: "User created successfully",
+      message: "Password updated successfully",
     });
   } catch (error) {
     res.status(500).json({
@@ -901,7 +901,7 @@ module.exports = {
   sendVerificationToken,
   resendToken,
   loginUser,
-  getUser,
+  getProfile,
   getDashboard,
   updateUserInfo,
   updatePaymentInfo,
