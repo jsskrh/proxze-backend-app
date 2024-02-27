@@ -41,23 +41,23 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     address: {
-      type: String,
-      // required: true,
+      street: {
+        type: String,
+      },
+      state: {
+        type: String,
+      },
+      postalCode: {
+        type: String,
+      },
+      lga: {
+        type: String,
+      },
+      country: {
+        type: String,
+        default: "Nigeria",
+      },
     },
-    state: {
-      type: String,
-    },
-    postalCode: {
-      type: String,
-    },
-    lga: {
-      type: String,
-    },
-    country: {
-      type: String,
-      default: "Nigeria",
-    },
-    // location: { type: String },
     userType: {
       type: String,
       required: true,

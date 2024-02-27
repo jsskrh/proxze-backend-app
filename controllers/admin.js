@@ -537,9 +537,21 @@ const getDashboard = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, search, userType } = req.query;
+    const {
+      page = 1,
+      search,
+      userType,
+      isVerified,
+      state,
+      lga,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate,
+    } = req.query;
     const perPage = 15;
     let query = {};
+    let sortQuery = {};
 
     query = {
       $and: [
@@ -553,11 +565,25 @@ const getUsers = async (req, res) => {
       ],
     };
 
-    if (userType !== undefined && userType !== "") {
+    if (userType !== undefined && userType !== "")
       query.$and.push({ userType });
-    }
+    if (isVerified !== undefined && isVerified !== "")
+      query.$and.push({ isVerified });
+    if (state !== undefined && state !== "") query.$and.push({ state });
+    if (lga !== undefined && lga !== "") query.$and.push({ lga });
+    if (startDate !== undefined && startDate !== "")
+      query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    if (endDate !== undefined && endDate !== "")
+      query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    if (sortBy !== undefined && sortBy !== "")
+      sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
 
+    const userCount = await User.countDocuments();
+    const proxzeCount = await User.countDocuments({ userType: "proxze" });
+    const principalCount = await User.countDocuments({ userType: "principal" });
+    const staffCount = await User.countDocuments({ userType: "admin" });
     const users = await User.find(query)
+      .sort(sortQuery)
       .skip((page - 1) * perPage)
       .limit(perPage);
     const count = await User.countDocuments(query);
@@ -566,7 +592,12 @@ const getUsers = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Users fetched",
-      data: { count, users, hasNextPage },
+      data: {
+        data: { proxzeCount, principalCount, staffCount },
+        count,
+        users,
+        hasNextPage,
+      },
     });
   } catch (err) {
     return res.status(500).json({
