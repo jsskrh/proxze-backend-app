@@ -20,6 +20,7 @@ router.delete(
   auth.isAdmin,
   Admin.deleteAccount
 );
+router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
 router.get("/dashboard", auth.authToken, auth.isAdmin, Admin.getDashboard);
 
 module.exports = router;

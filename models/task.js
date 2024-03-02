@@ -31,6 +31,8 @@ const taskSchema = new mongoose.Schema(
           // default: [0, 0],
         },
       },
+      state: { type: String, trim: true },
+      lga: { type: String, trim: true },
     },
     // occupation: { type: String, required: true, trim: true },
     // searchRange: { type: String, required: true, trim: true },
@@ -50,6 +52,12 @@ const taskSchema = new mongoose.Schema(
         },
       },
     ],
+    status: {
+      type: String,
+      default: "created",
+      trim: true,
+      // enum: Object.values(states),
+    },
     startDate: { type: Date, required: true, trim: true },
     endDate: { type: Date, required: true, trim: true },
     principal: {
