@@ -13,6 +13,7 @@ const {
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 const { createVerificationMail } = require("../utils/mail");
+const System = require("../models/system");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -515,10 +516,12 @@ const deleteAccount = async (req, res) => {
 
 const getDashboard = async (req, res) => {
   try {
-    const users = await User.find();
-    const tasks = await Task.find();
+    const users = await User.countDocuments();
+    const tasks = await Task.countDocuments();
+    const system = await System.findById("6427dcf5e7e46b77b43bb882");
+    const balance = system.balance;
 
-    const stats = { users: users.length, tasks: tasks.length };
+    const stats = { users, tasks, balance };
 
     const dashboard = { stats };
 
@@ -607,6 +610,76 @@ const getUsers = async (req, res) => {
   }
 };
 
+const getTasks = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      search,
+      state,
+      lga,
+      status,
+      type,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate,
+    } = req.query;
+    const perPage = 15;
+    let query = {};
+    let sortQuery = {};
+
+    query = {
+      $and: [
+        {
+          $or: [
+            { description: { $regex: search, $options: "i" } },
+            { "location.label": { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    if (type !== undefined && type !== "") query.$and.push({ type });
+    if (status !== undefined && status !== "") query.$and.push({ status });
+    if (state !== undefined && state !== "")
+      query.$and.push({ "location.state": state });
+    if (lga !== undefined && lga !== "")
+      query.$and.push({ "location.lga": lga });
+    if (startDate !== undefined && startDate !== "")
+      query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    if (endDate !== undefined && endDate !== "")
+      query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    if (sortBy !== undefined && sortBy !== "")
+      sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
+
+    const taskCount = await Task.countDocuments();
+    const taskpoolCount = await Task.countDocuments({ status: "created" });
+    const activeCount = await Task.countDocuments({ status: "started" });
+    const tasks = await Task.find(query)
+      .sort(sortQuery)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+    const count = await Task.countDocuments(query);
+    const hasNextPage = page * perPage < count;
+
+    return res.status(201).json({
+      status: true,
+      message: "Tasks fetched",
+      data: {
+        data: { taskpoolCount, activeCount },
+        count,
+        tasks,
+        hasNextPage,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get tasks. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
 module.exports = {
   verifyEmail,
   sendVerificationToken,
@@ -614,6 +687,7 @@ module.exports = {
   loginUser,
   getUser,
   getUsers,
+  getTasks,
   getDashboard,
   updateUserInfo,
   updatePaymentInfo,
