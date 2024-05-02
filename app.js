@@ -19,6 +19,7 @@ const organizationRoutes = require("./routes/organization");
 const notificationRoutes = require("./routes/notifications");
 const miscalleneousRoutes = require("./routes/miscalleneous");
 const { billingAlgorithmSeeder } = require("./utils/seed/billingAlgorithm");
+const { configSeeder } = require("./utils/seed/config");
 dotenv.config();
 
 const app = express();
@@ -46,7 +47,7 @@ mongoose
   })
   .then(() => {
     console.log("Successfully connected to Database.");
-    // billingAlgorithmSeeder();
+    // configSeeder();
   })
   .catch((err) => {
     console.error("Unable to connect to Database.", err);

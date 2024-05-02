@@ -37,11 +37,7 @@ const getOrgReqs = async (req, res) => {
       select: "_id firstName lastName",
     });
 
-    return res.status(201).json({
-      status: true,
-      message: "Requests fetched successfully",
-      data: requests,
-    });
+    return res.status(201).json(requests);
   } catch (err) {
     return res.status(500).json({
       status: true,
@@ -62,11 +58,7 @@ const getOrgReq = async (req, res) => {
       reqArr.push(request);
     }
 
-    return res.status(201).json({
-      status: true,
-      message: "Request fetched successfully",
-      data: reqArr,
-    });
+    return res.status(201).json(reqArr);
   } catch (err) {
     return res.status(500).json({
       status: true,
@@ -376,11 +368,7 @@ const getOrgs = async (req, res) => {
       "members.user": req.user.id,
     });
 
-    return res.status(201).json({
-      status: true,
-      message: "Organizations fetched successfully",
-      data: organizations,
-    });
+    return res.status(201).json(organizations);
   } catch (err) {
     return res.status(500).json({
       status: true,

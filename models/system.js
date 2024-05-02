@@ -14,6 +14,11 @@ const systemSchema = new mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    ledgerBalance: {
+      type: mongoose.Decimal128,
+      required: true,
+      default: 0.0,
+    },
     email: {
       type: String,
       required: true,

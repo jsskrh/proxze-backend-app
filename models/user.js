@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      unique: true,
+      // unique: true,
       validate: {
         validator: function (v) {
           return /^\d{11}$/.test(v);
@@ -70,6 +70,8 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
+      default:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/1200px-Default_pfp.svg.png",
     },
     bio: {
       type: String,
@@ -99,6 +101,10 @@ const userSchema = new mongoose.Schema(
       },
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    ninVerified: {
       type: Boolean,
       default: false,
     },

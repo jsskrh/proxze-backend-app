@@ -19,6 +19,8 @@ const creditAccount = async ({
 }) => {
   let user;
 
+  const config = await System.findOne().session(session);
+
   if (purpose === "deposit") {
     user = await System.findOne().session(session);
   } else if (purpose === "transfer") {
@@ -33,7 +35,15 @@ const creditAccount = async ({
     };
   }
 
-  await user.updateOne({ $inc: { balance: amount } }, { session });
+  if (purpose === "deposit") {
+    await config.updateOne(
+      { $inc: { holdings: { balance: amount, total: amount } } },
+      { session }
+    );
+    await user.updateOne({ $inc: { balance: amount } }, { session });
+  } else {
+    await user.updateOne({ $inc: { balance: amount } }, { session });
+  }
 
   // let updatedUser;
 

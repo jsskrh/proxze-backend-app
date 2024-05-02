@@ -13,6 +13,7 @@ const {
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 const { createVerificationMail } = require("../utils/mail");
+const axios = require("axios");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -93,6 +94,30 @@ const createUser = async (req, res) => {
       html: createVerificationMail({ firstName, email, encodedToken }),
     };
 
+    const { data } = await axios.post(
+      "https://api.verified.africa/sfx-verify/v3/id-service/",
+      {
+        verificationType: "NIN-VERIFY",
+        countryCode: "NG",
+        searchParameter: result.nin,
+        transactionReference: result._id,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          userid: process.env.VERIFIED_AFRICA_USERID,
+          apiKey: process.env.VERIFIED_AFRICA_APIKEY,
+        },
+      }
+    );
+
+    console.log(data);
+
+    const verificationStatus = data.verificationStatus;
+    if (verificationStatus === "VERIFIED") {
+      await User.findByIdAndUpdate(result._id, { ninVerified: true });
+    }
+
     // sendMail(
     //   msg.subject,
     //   msg.text,
@@ -126,6 +151,7 @@ const createUser = async (req, res) => {
       data: result,
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       status: true,
       message: `Unable to create user. Please try again. \n Error: ${err}`,
@@ -460,6 +486,11 @@ const getProfile = async (req, res) => {
       lga: user.lga,
       balance: user.balance,
       avatar: user.avatar,
+      nin: user.nin,
+      isVerified: user.isVerified,
+      ninVerified: user.ninVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
       paymentInfo: {
         bank: user.paymentInfo?.bank,
         accountName: user.paymentInfo?.accountName,
@@ -555,6 +586,76 @@ const updateUserInfo = async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).send({ error: "Server error" });
+  }
+};
+
+const updateBasicInfo = async (req, res) => {
+  // function to patch user data, firstName, lastName, NIN, email, phoneNumber
+  const { firstName, lastName, nin, email, phoneNumber } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (firstName) {
+      user.firstName = firstName;
+    }
+
+    if (lastName) {
+      user.lastName = lastName;
+    }
+
+    if (nin) {
+      user.nin = nin;
+    }
+
+    if (email) {
+      user.email = email;
+    }
+
+    if (phoneNumber) {
+      user.phoneNumber = phoneNumber;
+    }
+
+    await user.save();
+
+    const userData = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      userType: user.userType,
+      bio: user.bio,
+      phoneNumber: user.phoneNumber,
+      address: user.address,
+      state: user.state,
+      country: user.country,
+      lga: user.lga,
+      balance: user.balance,
+      avatar: user.avatar,
+      nin: user.nin,
+      isVerified: user.isVerified,
+      ninVerified: user.ninVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      paymentInfo: {
+        bank: user.paymentInfo?.bank,
+        accountName: user.paymentInfo?.accountName,
+        bankCode: user.paymentInfo?.bankCode,
+        accountNumber:
+          user.paymentInfo?.accountNumber &&
+          hideChars(user.paymentInfo?.accountNumber),
+      },
+      rating: getAverageRating(user.reviews),
+      postalCode: user.postalCode,
+    };
+
+    res.status(200).send(userData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
   }
 };
 
@@ -903,6 +1004,7 @@ module.exports = {
   loginUser,
   getProfile,
   getDashboard,
+  updateBasicInfo,
   updateUserInfo,
   updatePaymentInfo,
   updatePassword,

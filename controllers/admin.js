@@ -680,6 +680,79 @@ const getTasks = async (req, res) => {
   }
 };
 
+const getTransactions = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      search,
+      type,
+      purpose,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate,
+    } = req.query;
+    const perPage = 15;
+    let query = {};
+    let sortQuery = {};
+
+    query = {
+      $and: [
+        {
+          $or: [
+            { summary: { $regex: search, $options: "i" } },
+            { transactionSummary: { $regex: search, $options: "i" } },
+            { reference: { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    if (type !== undefined && type !== "")
+      query.$and.push({ transactionType: type });
+    if (purpose !== undefined && purpose !== "") query.$and.push({ purpose });
+    // if (state !== undefined && state !== "")
+    //   query.$and.push({ "location.state": state });
+    // if (lga !== undefined && lga !== "")
+    //   query.$and.push({ "location.lga": lga });
+    if (startDate !== undefined && startDate !== "")
+      query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    if (endDate !== undefined && endDate !== "")
+      query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    if (sortBy !== undefined && sortBy !== "")
+      sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
+
+    const transactionCount = await Transaction.countDocuments();
+    const system = await System.findById("6427dcf5e7e46b77b43bb882");
+    const balance = system.balance;
+    const ledgerBalance = system.ledgerBalance;
+    // const taskpoolCount = await Transaction.countDocuments({ status: "created" });
+    // const activeCount = await Transaction.countDocuments({ status: "started" });
+    const transactions = await Transaction.find(query)
+      .populate({
+        path: "user",
+        select: "_id firstName lastName",
+      })
+      .sort(sortQuery)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+    const count = await Transaction.countDocuments(query);
+    const hasNextPage = page * perPage < count;
+
+    return res.status(201).json({
+      data: { transactionCount, balance, ledgerBalance },
+      count,
+      transactions,
+      hasNextPage,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get transactions. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
 module.exports = {
   verifyEmail,
   sendVerificationToken,
@@ -688,6 +761,7 @@ module.exports = {
   getUser,
   getUsers,
   getTasks,
+  getTransactions,
   getDashboard,
   updateUserInfo,
   updatePaymentInfo,
