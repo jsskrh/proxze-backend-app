@@ -352,7 +352,7 @@ const getTaskpool = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Taskpool fetched",
-      data: mappedTasks,
+      data: tasks,
     });
   } catch (error) {
     console.log(error);
@@ -431,7 +431,7 @@ const makeOffer = async (req, res) => {
       .populate("offers.proxze");
     //.populate("attachments");
     // .populate("offers.proxze.reviews");
-
+    console.log(populatedTask);
     const principal = await User.findById(populatedTask.principal._id);
 
     if (principal.token[0]) {
@@ -485,7 +485,7 @@ const makeOffer = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-
+    console.log(error);
     res.status(500).json({
       status: false,
       message: "Server error",
