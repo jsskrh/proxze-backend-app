@@ -296,7 +296,10 @@ const loginUser = async (req, res) => {
       // if (Expo.isExpoPushToken(expoPushToken)) {
       //   await sendPushNotification(expoPushToken, message);
       // }
-      res.status(200).send(userData);
+      const userDto = User.findById(user._id).select(
+        "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      );
+      res.status(200).send(userDto);
     } else {
       res.status(401).send("Invalid Credentials");
     }
@@ -395,7 +398,11 @@ const updateUserInfo = async (req, res) => {
       postalCode: user.postalCode,
     };
 
-    res.status(201).send(userData);
+    const userDto = User.findById(user._id).select(
+      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    );
+
+    res.status(201).send(userDto);
   } catch (error) {
     console.error(error.message);
     res.status(500).send({ error: "Server error" });

@@ -19,16 +19,22 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     nin: {
-      type: String,
-      required: true,
-      trim: true,
-      // unique: true,
-      validate: {
-        validator: function (v) {
-          return /^\d{11}$/.test(v);
+      value: {
+        type: String,
+        required: true,
+        trim: true,
+        validate: {
+          validator: function (v) {
+            return /^\d{11}$/.test(v);
+          },
+          message: (props) =>
+            `${props.value} is not a valid NIN. It must be an 11-digit number.`,
         },
-        message: (props) =>
-          `${props.value} is not a valid NIN. It must be an 11-digit number.`,
+        data: { type: mongoose.Schema.Types.ObjectId, ref: "NinData" },
+        isVerified: {
+          type: Boolean,
+          default: false,
+        },
       },
     },
     password: {
@@ -52,6 +58,48 @@ const userSchema = new mongoose.Schema(
       },
       lga: {
         type: String,
+      },
+      country: {
+        type: String,
+        default: "Nigeria",
+      },
+    },
+    oplAddress: {
+      label: String,
+      placeId: String,
+      lga: String,
+      state: String,
+      location: {
+        type: {
+          type: String,
+          enum: ["Point"],
+          // default: "Point",
+        },
+        coordinates: {
+          type: [Number],
+          // default: [0, 0],
+        },
+      },
+      country: {
+        type: String,
+        default: "Nigeria",
+      },
+    },
+    resAddress: {
+      label: String,
+      placeId: String,
+      lga: String,
+      state: String,
+      location: {
+        type: {
+          type: String,
+          enum: ["Point"],
+          // default: "Point",
+        },
+        coordinates: {
+          type: [Number],
+          // default: [0, 0],
+        },
       },
       country: {
         type: String,
@@ -132,6 +180,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.index({ location: "2dsphere" });
+userSchema.index({
+  location: "2dsphere",
+  "oplAddress.location": "2dsphere",
+  "resAddress.location": "2dsphere",
+});
 const User = mongoose.model("User", userSchema);
 module.exports = User;

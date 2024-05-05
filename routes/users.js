@@ -14,6 +14,7 @@ router.put("/location", auth.authToken, Users.updateLocation);
 router.get("/profile", auth.authToken, Users.getProfile);
 router.get("/dashboard", auth.authToken, Users.getDashboard);
 router.patch("/settings/basic-info", auth.authToken, Users.updateBasicInfo);
+router.patch("/settings/address", auth.authToken, Users.updateAddress);
 router.put("/settings/user-info", auth.authToken, Users.updateUserInfo);
 router.put(
   "/settings/payment-info",

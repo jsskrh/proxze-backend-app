@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const Task = require("../models/task");
+const NinData = require("../models/ninData");
 const Transaction = require("../models/transaction");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -51,7 +52,7 @@ const createUser = async (req, res) => {
       lastName,
       email,
       phoneNumber,
-      nin,
+      nin: { value: nin },
       userType:
         password ===
         "1349dc92a04ae33eda5c60981b4424e8cc3ff2dedccebc48526262adceb28b60"
@@ -94,13 +95,15 @@ const createUser = async (req, res) => {
       html: createVerificationMail({ firstName, email, encodedToken }),
     };
 
+    const ninData = await NinData.create({ nin: result.nin.value });
+
     const { data } = await axios.post(
       "https://api.verified.africa/sfx-verify/v3/id-service/",
       {
         verificationType: "NIN-VERIFY",
         countryCode: "NG",
-        searchParameter: result.nin,
-        transactionReference: result._id,
+        searchParameter: ninData.nin,
+        transactionReference: ninData._id,
       },
       {
         headers: {
@@ -111,11 +114,12 @@ const createUser = async (req, res) => {
       }
     );
 
-    console.log(data);
-
     const verificationStatus = data.verificationStatus;
     if (verificationStatus === "VERIFIED") {
-      await User.findByIdAndUpdate(result._id, { ninVerified: true });
+      await User.findByIdAndUpdate(result._id, {
+        "nin.isVerified": true,
+        data: ninData._id,
+      });
     }
 
     // sendMail(
@@ -436,7 +440,7 @@ const loginUser = async (req, res) => {
       // }
 
       const userData = {
-        id: user._id,
+        _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -459,6 +463,11 @@ const loginUser = async (req, res) => {
       // if (Expo.isExpoPushToken(expoPushToken)) {
       //   await sendPushNotification(expoPushToken, message);
       // }
+
+      const userDto = User.findById(user._id).select(
+        "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      );
+
       res.status(200).send(userData);
     } else {
       res.status(401).send("Invalid Credentials");
@@ -502,7 +511,10 @@ const getProfile = async (req, res) => {
       rating: getAverageRating(user.reviews),
       postalCode: user.postalCode,
     };
-    res.status(201).send(userData);
+    const userDto = User.findById(user._id).select(
+      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    );
+    res.status(201).send(userDto);
   } catch (error) {
     res.status(500).send(error);
   }
@@ -581,8 +593,10 @@ const updateUserInfo = async (req, res) => {
       accountNumber: user.accountNumber && hideChars(user.accountNumber),
       postalCode: user.postalCode,
     };
-
-    res.status(201).send(userData);
+    const userDto = User.findById(user._id).select(
+      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    );
+    res.status(201).send(userDto);
   } catch (error) {
     console.error(error.message);
     res.status(500).send({ error: "Server error" });
@@ -605,7 +619,32 @@ const updateBasicInfo = async (req, res) => {
     }
 
     if (nin) {
-      user.nin = nin;
+      user.nin.value = nin;
+
+      const ninData = await NinData.create({ nin });
+
+      const { data } = await axios.post(
+        "https://api.verified.africa/sfx-verify/v3/id-service/",
+        {
+          verificationType: "NIN-VERIFY",
+          countryCode: "NG",
+          searchParameter: nin,
+          transactionReference: ninData._id,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            userid: process.env.VERIFIED_AFRICA_USERID,
+            apiKey: process.env.VERIFIED_AFRICA_APIKEY,
+          },
+        }
+      );
+
+      const verificationStatus = data.verificationStatus;
+      if (verificationStatus === "VERIFIED") {
+        user.nin.isVerified = true;
+        user.nin.data = ninData._id;
+      }
     }
 
     if (email) {
@@ -648,8 +687,60 @@ const updateBasicInfo = async (req, res) => {
       rating: getAverageRating(user.reviews),
       postalCode: user.postalCode,
     };
+    const userDto = User.findById(user._id).select(
+      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    );
 
-    res.status(200).send(userData);
+    res.status(200).send(userDto);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
+const updateAddress = async (req, res) => {
+  const { resAddress, oplAddress } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    await User.findByIdAndUpdate(req.user.id, {
+      location: {
+        type: "Point",
+        coordinates: [location.lng, location.lat],
+      },
+    });
+
+    if (resAddress) {
+      user.resAddress = {
+        location: {
+          type: "Point",
+          coordinates: [resAddress.location.lng, resAddress.location.lat],
+        },
+        ...resAddress,
+      };
+    }
+
+    if (oplAddress) {
+      user.oplAddress = {
+        location: {
+          type: "Point",
+          coordinates: [oplAddress.location.lng, oplAddress.location.lat],
+        },
+        ...oplAddress,
+      };
+    }
+
+    await user.save();
+
+    const userDto = User.findById(user._id).select(
+      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    );
+
+    res.status(200).send(userDto);
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -1005,6 +1096,7 @@ module.exports = {
   getProfile,
   getDashboard,
   updateBasicInfo,
+  updateAddress,
   updateUserInfo,
   updatePaymentInfo,
   updatePassword,
