@@ -480,7 +480,7 @@ const makeOffer = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Offer has been made`,
-      data: createTaskObject(populatedTask),
+      data: populatedTask,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -566,7 +566,7 @@ const acceptOffer = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Proxze has been assigned`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
