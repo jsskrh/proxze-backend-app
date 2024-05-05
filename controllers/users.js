@@ -465,8 +465,8 @@ const loginUser = async (req, res) => {
       //   await sendPushNotification(expoPushToken, message);
       // }
 
-      const userDto = User.findById(user._id).select(
-        "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      const userDto = await User.findById(user._id).select(
+        "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
       );
 
       res.status(200).send(userData);
@@ -482,41 +482,43 @@ const loginUser = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const userData = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      userType: user.userType,
-      bio: user.bio,
-      phoneNumber: user.phoneNumber,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-      lga: user.lga,
-      balance: user.balance,
-      avatar: user.avatar,
-      nin: user.nin,
-      isVerified: user.isVerified,
-      ninVerified: user.ninVerified,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      paymentInfo: {
-        bank: user.paymentInfo?.bank,
-        accountName: user.paymentInfo?.accountName,
-        bankCode: user.paymentInfo?.bankCode,
-        accountNumber:
-          user.paymentInfo?.accountNumber &&
-          hideChars(user.paymentInfo?.accountNumber),
-      },
-      rating: getAverageRating(user.reviews),
-      postalCode: user.postalCode,
-    };
-    const userDto = User.findById(user._id).select(
-      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    console.log(user);
+    // const userData = {
+    //   id: user._id,
+    //   firstName: user.firstName,
+    //   lastName: user.lastName,
+    //   email: user.email,
+    //   userType: user.userType,
+    //   bio: user.bio,
+    //   phoneNumber: user.phoneNumber,
+    //   address: user.address,
+    //   state: user.state,
+    //   country: user.country,
+    //   lga: user.lga,
+    //   balance: user.balance,
+    //   avatar: user.avatar,
+    //   nin: user.nin,
+    //   isVerified: user.isVerified,
+    //   ninVerified: user.ninVerified,
+    //   createdAt: user.createdAt,
+    //   updatedAt: user.updatedAt,
+    //   paymentInfo: {
+    //     bank: user.paymentInfo?.bank,
+    //     accountName: user.paymentInfo?.accountName,
+    //     bankCode: user.paymentInfo?.bankCode,
+    //     accountNumber:
+    //       user.paymentInfo?.accountNumber &&
+    //       hideChars(user.paymentInfo?.accountNumber),
+    //   },
+    //   rating: getAverageRating(user.reviews),
+    //   postalCode: user.postalCode,
+    // };
+    const userDto = await User.findById(user._id).select(
+      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
     );
-    res.status(201).send(userDto);
+    res.status(201).send(userDto.toObject());
   } catch (error) {
+    console.log(error);
     res.status(500).send(error);
   }
 };
@@ -594,8 +596,8 @@ const updateUserInfo = async (req, res) => {
       accountNumber: user.accountNumber && hideChars(user.accountNumber),
       postalCode: user.postalCode,
     };
-    const userDto = User.findById(user._id).select(
-      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    const userDto = await User.findById(user._id).select(
+      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
     );
     res.status(201).send(userDto);
   } catch (error) {
@@ -689,8 +691,8 @@ const updateBasicInfo = async (req, res) => {
       rating: getAverageRating(user.reviews),
       postalCode: user.postalCode,
     };
-    const userDto = User.findById(user._id).select(
-      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    const userDto = await User.findById(user._id).select(
+      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
     );
 
     res.status(200).send(userDto);
@@ -737,8 +739,8 @@ const updateAddress = async (req, res) => {
 
     await user.save();
 
-    const userDto = User.findById(user._id).select(
-      "_id firstName lastName email userType bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+    const userDto = await User.findById(user._id).select(
+      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
     );
 
     res.status(200).send(userDto);
