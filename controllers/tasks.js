@@ -213,7 +213,7 @@ const getTask = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Task fetched",
-      data: createTaskObject(task, stream),
+      data: task,
     });
   } catch (error) {
     console.log(error);
@@ -370,12 +370,18 @@ const makeOffer = async (req, res) => {
   try {
     const { coverLetter, timestamp } = req.body;
 
-    if (!coverLetter || !timestamp) {
+    if (!timestamp) {
       return res.status(401).json({
         status: false,
         message: "No cover letter present",
       });
     }
+    // if (!coverLetter || !timestamp) {
+    //   return res.status(401).json({
+    //     status: false,
+    //     message: "No cover letter present",
+    //   });
+    // }
 
     const task = await Task.findById(req.params.taskId).session(session);
 
