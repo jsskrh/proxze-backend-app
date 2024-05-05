@@ -116,6 +116,7 @@ const createUser = async (req, res) => {
 
     const verificationStatus = data.verificationStatus;
     if (verificationStatus === "VERIFIED") {
+      await NinData.findByIdAndUpdate(ninData._id, { ...data.response });
       await User.findByIdAndUpdate(result._id, {
         "nin.isVerified": true,
         data: ninData._id,
@@ -642,6 +643,7 @@ const updateBasicInfo = async (req, res) => {
 
       const verificationStatus = data.verificationStatus;
       if (verificationStatus === "VERIFIED") {
+        await NinData.findByIdAndUpdate(ninData._id, { ...data.response });
         user.nin.isVerified = true;
         user.nin.data = ninData._id;
       }
@@ -703,7 +705,7 @@ const updateBasicInfo = async (req, res) => {
 
 const updateAddress = async (req, res) => {
   const { resAddress, oplAddress } = req.body;
-
+  console.log(req.body);
   try {
     const user = await User.findById(req.user.id);
 
