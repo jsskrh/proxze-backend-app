@@ -709,20 +709,16 @@ const updateAddress = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    await User.findByIdAndUpdate(req.user.id, {
-      location: {
-        type: "Point",
-        coordinates: [location.lng, location.lat],
-      },
-    });
-
     if (resAddress) {
       user.resAddress = {
         location: {
           type: "Point",
-          coordinates: [resAddress.location.lng, resAddress.location.lat],
+          coordinates: [resAddress.coords.lng, resAddress.coords.lat],
         },
-        ...resAddress,
+        label: resAddress.label,
+        placeId: resAddress.placeId,
+        lga: resAddress.lga,
+        state: resAddress.state,
       };
     }
 
@@ -730,9 +726,12 @@ const updateAddress = async (req, res) => {
       user.oplAddress = {
         location: {
           type: "Point",
-          coordinates: [oplAddress.location.lng, oplAddress.location.lat],
+          coordinates: [oplAddress.coords.lng, oplAddress.coords.lat],
         },
-        ...oplAddress,
+        label: oplAddress.label,
+        placeId: oplAddress.placeId,
+        lga: oplAddress.lga,
+        state: oplAddress.state,
       };
     }
 

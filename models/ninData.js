@@ -46,6 +46,10 @@ const ninDataSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    dateOfBirth: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
