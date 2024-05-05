@@ -994,7 +994,7 @@ const getOngoingTasks = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Pending requests fetched",
-      data: mappedTasks,
+      data: tasks,
     });
   } catch (error) {
     console.log(error);
