@@ -30,11 +30,11 @@ const userSchema = new mongoose.Schema(
           message: (props) =>
             `${props.value} is not a valid NIN. It must be an 11-digit number.`,
         },
-        data: { type: mongoose.Schema.Types.ObjectId, ref: "NinData" },
-        isVerified: {
-          type: Boolean,
-          default: false,
-        },
+      },
+      data: { type: mongoose.Schema.Types.ObjectId, ref: "NinData" },
+      isVerified: {
+        type: Boolean,
+        default: false,
       },
     },
     password: {
