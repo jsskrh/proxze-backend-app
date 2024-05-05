@@ -304,7 +304,7 @@ const approveRejectRequest = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Task has been ${req.params.type} successfully`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
@@ -610,7 +610,7 @@ const rejectOffer = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Proxze has been rejected`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
@@ -722,7 +722,7 @@ const startTask = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Task has started`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
@@ -769,7 +769,7 @@ const uploadAttachment = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `File has been saved`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     console.log(error);
@@ -856,7 +856,7 @@ const completeTask = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Task has been completed`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
@@ -941,7 +941,7 @@ const confirmTask = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: `Task has been confirmed`,
-      data: createTaskObject(task),
+      data: task,
     });
   } catch (error) {
     res.status(500).json({
