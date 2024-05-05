@@ -206,7 +206,7 @@ const creditAccount = async ({
     statusCode: 201,
     message: "Credit successful",
     // data: { updatedUser, transaction },
-    data: createTaskObject(task),
+    data: task,
   };
 };
 
