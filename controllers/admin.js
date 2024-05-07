@@ -188,12 +188,12 @@ const sendVerificationToken = async (req, res) => {
       to: email,
       from: process.env.MAIL_USER,
       subject: "Verify Your Email",
-      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://www.proxze.com/verify-email/${encodedToken}`,
+      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
       html: createVerificationMail({
         firstName,
         email,
         encodedToken,
-        liveUrl: "https://www.proxze.com",
+        liveUrl: process.env.CLIENT_URL,
       }),
     };
 
