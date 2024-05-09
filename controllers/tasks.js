@@ -210,11 +210,7 @@ const getTask = async (req, res) => {
     //     return err;
     //   });
 
-    return res.status(201).json({
-      status: true,
-      message: "Task fetched",
-      data: task,
-    });
+    return res.status(201).json(task);
   } catch (error) {
     console.log(error);
     res.status(500).json({
