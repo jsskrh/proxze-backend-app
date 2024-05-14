@@ -418,6 +418,11 @@ const makeOffer = async (req, res) => {
     // Add the new offer to the task's offers array
     task.offers.push(newOffer);
 
+    if (task.enterprise) {
+      task.timeline.push({ status: "assigned", timestamp: Date.now() });
+      task.timeline.push({ status: "approved", timestamp: Date.now() });
+    }
+
     // Save the task with the new offer
     await task.save();
 

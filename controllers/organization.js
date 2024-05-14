@@ -423,6 +423,7 @@ const acceptBulkJob = async (req, res) => {
         user: job.organization,
         principal: job.createdBy,
         organization: job.organization._id,
+        enterprise: true,
       });
       createdTasks.push(newTask._id);
     }

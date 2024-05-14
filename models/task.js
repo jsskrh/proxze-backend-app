@@ -34,6 +34,7 @@ const taskSchema = new mongoose.Schema(
       state: { type: String, trim: true },
       lga: { type: String, trim: true },
     },
+    enterprise: { type: Boolean, default: false, trim: true },
     // occupation: { type: String, required: true, trim: true },
     // searchRange: { type: String, required: true, trim: true },
     // skillLevel: { type: String, required: true, trim: true },
