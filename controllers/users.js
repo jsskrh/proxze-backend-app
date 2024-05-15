@@ -317,7 +317,9 @@ const resendToken = async (req, res) => {
 
 const sendVerificationToken = async (req, res) => {
   try {
-    const { email, firstName } = req.body;
+    // const { email, firstName } = req.body;
+    const email = "jesseakorah@gmail.com";
+    const firstName = "Jesse";
 
     if (!email || !firstName) {
       return res.status(400).json({
