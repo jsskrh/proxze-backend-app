@@ -20,6 +20,7 @@ const notificationRoutes = require("./routes/notifications");
 const miscalleneousRoutes = require("./routes/miscalleneous");
 const { billingAlgorithmSeeder } = require("./utils/seed/billingAlgorithm");
 const { configSeeder } = require("./utils/seed/config");
+const { verificationSeeder } = require("./utils/seed/verification");
 dotenv.config();
 
 const app = express();
@@ -40,6 +41,7 @@ const uri = process.env.MONGODB_URI;
 mongoose.set("strictQuery", false);
 mongoose
   .connect(uri, {
+    serverSelectionTimeoutMS: 60000,
     useNewUrlParser: true,
     useUnifiedTopology: true,
     // tls: true,
@@ -47,6 +49,7 @@ mongoose
   })
   .then(() => {
     console.log("Successfully connected to Database.");
+    // if (process.env.ENVIRONMENT === "prod") verificationSeeder();
     // configSeeder();
   })
   .catch((err) => {

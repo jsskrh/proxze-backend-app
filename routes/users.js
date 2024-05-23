@@ -9,7 +9,7 @@ router.post("/register", Users.createUser);
 router.get("/verify-email/:token", Users.verifyEmail);
 router.post("/resend-token", Users.resendToken);
 router.post("/send-token", Users.sendVerificationToken);
-router.post("/test-send-token", Users.sendVerificationToken);
+router.post("/test-send-token", Users.testRoute);
 router.post("/login", Users.loginUser);
 router.put("/location", auth.authToken, Users.updateLocation);
 router.get("/profile", auth.authToken, Users.getProfile);

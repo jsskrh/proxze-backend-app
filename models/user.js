@@ -18,8 +18,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
-    nin: {
-      value: {
+    ninData: {
+      nin: {
         type: String,
         required: true,
         trim: true,
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
             `${props.value} is not a valid NIN. It must be an 11-digit number.`,
         },
       },
-      data: { type: mongoose.Schema.Types.ObjectId, ref: "NinData" },
+      data: { type: mongoose.Schema.Types.ObjectId, ref: "Nin" },
       isVerified: {
         type: Boolean,
         default: false,
@@ -149,10 +149,6 @@ const userSchema = new mongoose.Schema(
       },
     },
     isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    ninVerified: {
       type: Boolean,
       default: false,
     },

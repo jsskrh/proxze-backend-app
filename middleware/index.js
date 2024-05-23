@@ -84,7 +84,7 @@ async function passwordCheck(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -104,7 +104,7 @@ async function isPrincipal(req, res, next) {
     console.log(error);
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -123,7 +123,7 @@ async function isProxze(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -139,10 +139,10 @@ async function isAdmin(req, res, next) {
         message: "You are not authorized",
       });
     }
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${err}`,
     });
   }
 }
@@ -161,7 +161,7 @@ async function isAccManager(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -183,7 +183,7 @@ async function isOrgMember(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -242,7 +242,7 @@ async function isOwnerPrincipal(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -262,7 +262,7 @@ async function isOwnerProxze(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -280,7 +280,7 @@ async function isPaid(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -298,7 +298,7 @@ async function isTaskUnassigned(req, res, next) {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }
@@ -322,7 +322,7 @@ async function accessChat(req, res, next) {
     console.log(error);
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Server error \n Error: ${error}`,
     });
   }
 }

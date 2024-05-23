@@ -1,6 +1,6 @@
 const User = require("../models/user");
 const Task = require("../models/task");
-const NinData = require("../models/ninData");
+const Nin = require("../models/nin");
 const Transaction = require("../models/transaction");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -13,8 +13,14 @@ const {
   sortDataByDate,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
-const { createVerificationMail } = require("../utils/mail");
+const {
+  createVerificationMail,
+  sendMail,
+  sendVerificationMail,
+} = require("../utils/mail");
 const axios = require("axios");
+const { verifyNin } = require("../utils/nin");
+const { verificationSeeder } = require("../utils/seed/verification");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -52,7 +58,7 @@ const createUser = async (req, res) => {
       lastName,
       email,
       phoneNumber,
-      nin: { value: nin },
+      ninData: { nin },
       userType:
         password ===
         "1349dc92a04ae33eda5c60981b4424e8cc3ff2dedccebc48526262adceb28b60"
@@ -61,94 +67,8 @@ const createUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    const verificationToken = jwt.sign(
-      { email: result.email },
-      process.env.VERIFICATION_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    const base64UrlEncode = (input) => {
-      return input.replace(/\./g, "(");
-    };
-
-    const encodedToken = base64UrlEncode(verificationToken);
-
-    let transporter = nodemailer.createTransport({
-      host: "mail.proxze.com",
-      port: 465,
-      secure: true, // use TLS
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      tls: {
-        // do not fail on invalid certs
-        rejectUnauthorized: false,
-      },
-    });
-
-    const msg = {
-      to: result.email,
-      from: process.env.MAIL_USER,
-      subject: "Verify Your Email",
-      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-      html: createVerificationMail({ firstName, email, encodedToken }),
-    };
-
-    const ninData = await NinData.create({ nin: result.nin.value });
-
-    const { data } = await axios.post(
-      "https://api.verified.africa/sfx-verify/v3/id-service/",
-      {
-        verificationType: "NIN-VERIFY",
-        countryCode: "NG",
-        searchParameter: ninData.nin,
-        transactionReference: ninData._id,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          userid: process.env.VERIFIED_AFRICA_USERID,
-          apiKey: process.env.VERIFIED_AFRICA_APIKEY,
-        },
-      }
-    );
-
-    const verificationStatus = data.verificationStatus;
-    if (verificationStatus === "VERIFIED") {
-      await NinData.findByIdAndUpdate(ninData._id, { ...data.response });
-      await User.findByIdAndUpdate(result._id, {
-        "nin.isVerified": true,
-        data: ninData._id,
-      });
-    }
-
-    // sendMail(
-    //   msg.subject,
-    //   msg.text,
-    //   createVerificationMail({ firstName, email, encodedToken }),
-    //   [result.email],
-    //   msg
-    // );
-
-    // await sgMail
-    //   .send(msg)
-    //   .then((response) => {
-    //     console.log(response[0].statusCode);
-    //     console.log(response[0].headers);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
-
-    // await new Promise((resolve, reject) => {
-    //   transporter.sendMail(msg, (err, info) => {
-    //     if (err) {
-    //       return reject(err);
-    //     }
-    //     resolve("Email sent");
-    //   });
-    // });
+    await sendVerificationMail(result);
+    await verifyNin(result);
 
     return res.status(201).json({
       status: true,
@@ -162,27 +82,6 @@ const createUser = async (req, res) => {
       message: `Unable to create user. Please try again. \n Error: ${err}`,
     });
   }
-};
-
-const sendCustomMailTemplate = async (email, firstName, encodedToken) => {
-  const msg = {
-    to: email,
-    from: process.env.MAIL_USER,
-    subject: "Verify Your Email",
-    text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-    html: createVerificationMail({ firstName, email, encodedToken }),
-  };
-
-  // await sgMail
-  //   .send(msg)
-  //   .then((response) => {
-  //     console.log(response[0].statusCode);
-  //     console.log(response[0].headers);
-  //   })
-  //   .catch((error) => {
-  //     console.error(error);
-  //   });
-  console.log("after sendgrid");
 };
 
 const verifyEmail = async (req, res) => {
@@ -317,9 +216,7 @@ const resendToken = async (req, res) => {
 
 const sendVerificationToken = async (req, res) => {
   try {
-    // const { email, firstName } = req.body;
-    const email = "jesseakorah@gmail.com";
-    const firstName = "Jesse";
+    const { email, firstName } = req.body;
 
     if (!email || !firstName) {
       return res.status(400).json({
@@ -328,67 +225,29 @@ const sendVerificationToken = async (req, res) => {
       });
     }
 
-    const verificationToken = jwt.sign(
-      { email: email },
-      process.env.VERIFICATION_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    const base64UrlEncode = (input) => {
-      return input.replace(/\./g, "(");
-    };
-
-    const encodedToken = base64UrlEncode(verificationToken);
-
-    let transporter = nodemailer.createTransport({
-      host: "mail.proxze.com",
-      port: 465,
-      secure: true, // use TLS
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      tls: {
-        // do not fail on invalid certs
-        rejectUnauthorized: false,
-      },
-    });
-
-    const msg = {
-      to: email,
-      from: process.env.MAIL_USER,
-      subject: "Verify Your Email",
-      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-      html: createVerificationMail({
-        firstName,
-        email,
-        encodedToken,
-        liveUrl: process.env.CLIENT_URL,
-      }),
-    };
-
-    // await sgMail
-    //   .send(msg)
-    //   .then((response) => {
-    //     console.log(response[0].statusCode);
-    //     console.log(response[0].headers);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
-
-    await new Promise((resolve, reject) => {
-      transporter.sendMail(msg, (err, info) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve("Email sent");
-      });
-    });
+    const user = await User.findOne({ email });
+    await sendVerificationMail(user);
 
     return res.status(201).json({
       status: true,
       message: "Verification email resent successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const testRoute = async (req, res) => {
+  try {
+    const data = await verificationSeeder();
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification email resent successfully",
+      data,
     });
   } catch (err) {
     return res.status(500).json({
@@ -516,7 +375,7 @@ const getProfile = async (req, res) => {
     //   postalCode: user.postalCode,
     // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -626,7 +485,7 @@ const updateBasicInfo = async (req, res) => {
     if (nin) {
       user.nin.value = nin;
 
-      const ninData = await NinData.create({ nin });
+      const nin = await Nin.create({ nin });
 
       const { data } = await axios.post(
         "https://api.verified.africa/sfx-verify/v3/id-service/",
@@ -634,7 +493,7 @@ const updateBasicInfo = async (req, res) => {
           verificationType: "NIN-VERIFY",
           countryCode: "NG",
           searchParameter: nin,
-          transactionReference: ninData._id,
+          transactionReference: nin._id,
         },
         {
           headers: {
@@ -647,9 +506,9 @@ const updateBasicInfo = async (req, res) => {
 
       const verificationStatus = data.verificationStatus;
       if (verificationStatus === "VERIFIED") {
-        await NinData.findByIdAndUpdate(ninData._id, { ...data.response });
+        await Nin.findByIdAndUpdate(nin._id, { ...data.response });
         user.nin.isVerified = true;
-        user.nin.data = ninData._id;
+        user.nin.data = nin._id;
       }
     }
 
@@ -1107,4 +966,5 @@ module.exports = {
   updatePassword,
   updateLocation,
   deactivateAccount,
+  testRoute,
 };

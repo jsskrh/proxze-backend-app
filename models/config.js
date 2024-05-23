@@ -12,7 +12,11 @@ const configSchema = new mongoose.Schema(
 
     holdings: {
       total: { type: mongoose.Decimal128, default: 0.0 },
-      balance: {
+      currentBalance: {
+        type: mongoose.Decimal128,
+        default: 0.0,
+      },
+      ledgerBalance: {
         type: mongoose.Decimal128,
         default: 0.0,
       },

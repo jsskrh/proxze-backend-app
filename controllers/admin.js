@@ -12,8 +12,12 @@ const {
   sortDataByDate,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
-const { createVerificationMail } = require("../utils/mail");
+const {
+  createVerificationMail,
+  sendVerificationMail,
+} = require("../utils/mail");
 const System = require("../models/system");
+const { verifyNin } = require("../utils/nin");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -760,6 +764,70 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const bulkEmailVerification = async (req, res) => {
+  try {
+    const users = await User.find({ isVerified: false });
+
+    for (const user of users) {
+      try {
+        await sendVerificationMail(user);
+      } catch (error) {
+        console.error(`Error sending verification mail ${user._id}: ${error}`);
+      }
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification emails sent successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification emails to users. Please try again. \n Error: ${error}`,
+    });
+  }
+};
+
+const bulkNinVerification = async (req, res) => {
+  try {
+    const users = await User.find({ "ninData.isVerified": false });
+
+    for (const user of users) {
+      try {
+        await verifyNin(user);
+      } catch (error) {
+        console.error(`Error verifying NIN for user ${user._id}: ${error}`);
+      }
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "NINs have been verified successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to verify users NIN. Please try again. \n Error: ${error}`,
+    });
+  }
+};
+
+const deleteUnverifiedNinUsers = async (req, res) => {
+  try {
+    await User.deleteMany({ "ninData.isVerified": false });
+
+    return res.status(201).json({
+      status: true,
+      message: "Unverified NIN users deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to delete unverified NIN users. Please try again. \n Error: ${error}`,
+    });
+  }
+};
+
 module.exports = {
   verifyEmail,
   sendVerificationToken,
@@ -776,4 +844,7 @@ module.exports = {
   updateLocation,
   deactivateAccount,
   deleteAccount,
+  bulkEmailVerification,
+  bulkNinVerification,
+  deleteUnverifiedNinUsers,
 };

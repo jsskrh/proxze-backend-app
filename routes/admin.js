@@ -28,5 +28,23 @@ router.get(
   Admin.getTransactions
 );
 router.get("/dashboard", auth.authToken, auth.isAdmin, Admin.getDashboard);
+router.patch(
+  "/bulk/users/deactivate-nin",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.deleteUnverifiedNinUsers
+);
+router.patch(
+  "/bulk/users/verify-email",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.bulkEmailVerification
+);
+router.patch(
+  "/bulk/users/verify-nin",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.bulkNinVerification
+);
 
 module.exports = router;
