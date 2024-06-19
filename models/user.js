@@ -4,12 +4,12 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
     },
     email: {
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     ninData: {
       nin: {
         type: String,
-        required: true,
+        // required: true,
         trim: true,
         validate: {
           validator: function (v) {
@@ -39,11 +39,11 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      // required: true,
     },
     phoneNumber: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     address: {
@@ -109,7 +109,14 @@ const userSchema = new mongoose.Schema(
     userType: {
       type: String,
       required: true,
-      enum: ["proxze", "principal", "admin", "support", "manager"],
+      enum: [
+        "proxze",
+        "principal",
+        "admin",
+        "support",
+        "manager",
+        "super-proxze",
+      ],
     },
     balance: {
       type: mongoose.Decimal128,
@@ -161,6 +168,8 @@ const userSchema = new mongoose.Schema(
       deafult: false,
     },
     token: [{ type: String }],
+    superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     location: {
       type: {
         type: String,

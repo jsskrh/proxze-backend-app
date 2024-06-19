@@ -6,11 +6,14 @@ const Users = require("../controllers/users");
 const auth = require("../middleware/index");
 
 router.post("/register", Users.createUser);
+router.patch("/register/sub/:token", Users.subProxzeRegistration);
 router.get("/verify-email/:token", Users.verifyEmail);
 router.post("/resend-token", Users.resendToken);
 router.post("/send-token", Users.sendVerificationToken);
-router.post("/test-send-token", Users.testRoute);
+router.get("/test-send-token", Users.testRoute);
 router.post("/login", Users.loginUser);
+router.post("/forgot-password", Users.forgotPassword);
+router.patch("/reset-password/:token", Users.resetPassword);
 router.put("/location", auth.authToken, Users.updateLocation);
 router.get("/profile", auth.authToken, Users.getProfile);
 router.get("/dashboard", auth.authToken, Users.getDashboard);

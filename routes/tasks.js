@@ -33,6 +33,14 @@ router.put(
   Tasks.makeOffer
 );
 router.put(
+  "/view/:taskId/proxze/accept-task",
+  auth.authToken,
+  auth.isProxze,
+  // auth.isPaid,
+  auth.isTaskUnassigned,
+  Tasks.acceptTask
+);
+router.put(
   "/view/:taskId/principal/accept-offer",
   auth.authToken,
   auth.isPrincipal,

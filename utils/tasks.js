@@ -54,40 +54,40 @@ const taskCreator = async ({
     enterprise: enterprise ?? false,
   });
 
-  const usersWithinRadius = await User.find({
-    userType: "proxze", // Replace with the actual userType value
-    location: {
-      $geoWithin: {
-        $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
-      },
-    },
-    token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
-  });
+  // const usersWithinRadius = await User.find({
+  //   userType: "proxze", // Replace with the actual userType value
+  //   location: {
+  //     $geoWithin: {
+  //       $centerSphere: [[location.coords.lng, location.coords.lat], 5 / 6371], // 5km radius in radians
+  //     },
+  //   },
+  //   token: { $exists: true, $not: { $size: 0 } }, // Non-empty token array
+  // });
 
-  const expo = new Expo();
-  const notifications = [];
+  // const expo = new Expo();
+  // const notifications = [];
 
-  for (const user of usersWithinRadius) {
-    for (const token of user.token) {
-      notifications.push({
-        to: token,
-        sound: "default",
-        title: "New task available!",
-        body: "There is a new task close to you",
-        data: { screenName: "Task", params: { taskId: newTask._id } },
-      });
-    }
-  }
+  // for (const user of usersWithinRadius) {
+  //   for (const token of user.token) {
+  //     notifications.push({
+  //       to: token,
+  //       sound: "default",
+  //       title: "New task available!",
+  //       body: "There is a new task close to you",
+  //       data: { screenName: "Task", params: { taskId: newTask._id } },
+  //     });
+  //   }
+  // }
 
-  const chunks = expo.chunkPushNotifications(notifications);
+  // const chunks = expo.chunkPushNotifications(notifications);
 
-  for (const chunk of chunks) {
-    try {
-      await expo.sendPushNotificationsAsync(chunk);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // for (const chunk of chunks) {
+  //   try {
+  //     await expo.sendPushNotificationsAsync(chunk);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
   return newTask;
 };

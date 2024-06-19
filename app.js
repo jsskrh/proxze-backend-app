@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const userRoutes = require("./routes/users");
 const adminRoutes = require("./routes/admin");
+const superRoutes = require("./routes/super");
 const staffRoutes = require("./routes/staff");
 const taskRoutes = require("./routes/tasks");
 const chatRoutes = require("./routes/chats");
@@ -50,7 +51,7 @@ mongoose
   .then(() => {
     console.log("Successfully connected to Database.");
     // if (process.env.ENVIRONMENT === "prod") verificationSeeder();
-    // configSeeder();
+    configSeeder();
   })
   .catch((err) => {
     console.error("Unable to connect to Database.", err);
@@ -61,6 +62,7 @@ app.get("/hello", (req, res) => {
 });
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/super", superRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/task", taskRoutes);
 app.use("/api/chat", chatRoutes);

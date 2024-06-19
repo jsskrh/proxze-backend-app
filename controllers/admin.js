@@ -583,8 +583,14 @@ const getUsers = async (req, res) => {
       query.$and.push({ userType });
     if (isVerified !== undefined && isVerified !== "")
       query.$and.push({ isVerified });
-    if (state !== undefined && state !== "") query.$and.push({ state });
-    if (lga !== undefined && lga !== "") query.$and.push({ lga });
+    if (state !== undefined && state !== "")
+      query.$and.push({
+        $or: [{ "resAddress.state": state }, { "address.state": state }],
+      });
+    if (lga !== undefined && lga !== "")
+      query.$and.push({
+        $or: [{ "resAddress.lga": lga }, { "address.lga": lga }],
+      });
     if (startDate !== undefined && startDate !== "")
       query.$and.push({ createdAt: { $gte: new Date(startDate) } });
     if (endDate !== undefined && endDate !== "")
@@ -592,7 +598,7 @@ const getUsers = async (req, res) => {
     if (sortBy !== undefined && sortBy !== "")
       sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
 
-    const userCount = await User.countDocuments();
+    const userCount = await User.countDocuments(query);
     const proxzeCount = await User.countDocuments({ userType: "proxze" });
     const principalCount = await User.countDocuments({ userType: "principal" });
     const staffCount = await User.countDocuments({ userType: "admin" });

@@ -157,10 +157,9 @@ const getPendingRequests = async (req, res) => {
       data: mappedRequests,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({
       status: false,
-      message: "Server error",
+      message: `Unable to update payment info. Please try again. \n Error: ${error}`,
     });
   }
 };
@@ -359,6 +358,126 @@ const getTaskpool = async (req, res) => {
   }
 };
 
+const acceptTask = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (!timestamp) {
+      return res.status(401).json({
+        status: false,
+        message: "No cover letter present",
+      });
+    }
+    // if (!coverLetter || !timestamp) {
+    //   return res.status(401).json({
+    //     status: false,
+    //     message: "No cover letter present",
+    //   });
+    // }
+
+    const task = await Task.findOne({
+      _id: req.params.taskId,
+      proxze: { $exists: false },
+    }).session(session);
+
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found",
+      });
+    }
+
+    // Set proxze to req.user.id and status to 'approved'
+    task.proxze = req.user.id;
+    task.status = "approved";
+
+    // Create a new offer
+    const newOffer = {
+      proxze: req.user.id,
+      coverLetter: "",
+      timestamp,
+    };
+
+    // Add the new offer to the task's offers array
+    task.offers.push(newOffer);
+
+    if (task.enterprise) {
+      task.timeline.push({ status: "assigned", timestamp: Date.now() });
+      task.timeline.push({ status: "approved", timestamp: Date.now() });
+    }
+
+    // Save the task with the new offer
+    await task.save();
+
+    const populatedTask = await Task.findById(task._id)
+      .populate("principal")
+      .populate("principal.reviews")
+      .populate("offers.proxze");
+    //.populate("attachments");
+    // .populate("offers.proxze.reviews");
+    console.log(populatedTask);
+    const principal = await User.findById(populatedTask.principal._id);
+
+    if (principal.token[0]) {
+      const expo = new Expo();
+      const notifications = [];
+
+      // for (const user of usersWithinRadius) {
+      for (const token of principal.token) {
+        notifications.push({
+          to: token,
+          sound: "default",
+          title: "New offer!",
+          body: `There is a new offer for your ${task.type} task`,
+          data: { screenName: "Task", params: { taskId: task._id } },
+        });
+      }
+      // }
+
+      const chunks = expo.chunkPushNotifications(notifications);
+
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    const newNotification = await Notification.create({
+      type: "task",
+      content: "You have a new offer",
+      recipient: task.principal._id,
+      sender: req.user.id,
+      task: task._id,
+    });
+
+    await User.findByIdAndUpdate(task.principal._id, {
+      $push: { notifications: newNotification._id },
+    });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).json({
+      status: true,
+      message: `Offer has been made`,
+      data: populatedTask,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.log(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
 const makeOffer = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -500,6 +619,7 @@ const acceptOffer = async (req, res) => {
       { _id: req.params.taskId, proxze: { $exists: false } },
       {
         proxze: req.body.proxze,
+        status: "approved",
         $push: {
           timeline: {
             status: "assigned",
@@ -988,9 +1108,11 @@ const getOngoingTasks = async (req, res) => {
         });
     }
 
-    const mappedTasks = tasks.map((task) => {
-      return createTaskListObject(task);
-    });
+    // const mappedTasks = tasks.map((task) => {
+    //   return createTaskListObject(task);
+    // });
+
+    console.log("tasks", tasks);
 
     return res.status(201).json({
       status: true,
@@ -1138,4 +1260,5 @@ module.exports = {
   getOngoingTasks,
   getTaskHistory,
   handleLive,
+  acceptTask,
 };

@@ -17,6 +17,8 @@ const {
   createVerificationMail,
   sendMail,
   sendVerificationMail,
+  sendResetMail,
+  sendReregisterMail,
 } = require("../utils/mail");
 const axios = require("axios");
 const { verifyNin } = require("../utils/nin");
@@ -80,6 +82,58 @@ const createUser = async (req, res) => {
     return res.status(500).json({
       status: true,
       message: `Unable to create user. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const subProxzeRegistration = async (req, res) => {
+  try {
+    const { firstName, lastName, password, phoneNumber, nin } = req.body;
+    const { token } = req.params;
+
+    if (!firstName || !lastName || !password || !phoneNumber || !nin) {
+      return res.status(400).json({
+        status: false,
+        message: "Fill in your details",
+      });
+    }
+
+    const base64UrlDecode = (input) => {
+      return input.replace(/\(/g, ".");
+    };
+    const decodedToken = base64UrlDecode(token);
+    const decoded = jwt.verify(
+      decodedToken,
+      process.env.VERIFICATION_TOKEN_SECRET
+    );
+    const { email, superProxze } = decoded;
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.findOneAndUpdate(
+      { email, superProxze },
+      {
+        firstName,
+        lastName,
+        password: hashedPassword,
+        isVerified: true,
+        "ninData.nin": nin,
+      },
+      { new: true }
+    );
+
+    await verifyNin(user);
+
+    return res.status(201).json({
+      status: true,
+      message: "Registration completed successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: true,
+      message: `Unable to complete registration. Please try again. \n Error: ${err}`,
     });
   }
 };
@@ -242,17 +296,94 @@ const sendVerificationToken = async (req, res) => {
 
 const testRoute = async (req, res) => {
   try {
-    const data = await verificationSeeder();
+    await sendReregisterMail();
 
     return res.status(201).json({
       status: true,
-      message: "Verification email resent successfully",
-      data,
+      message: "Reregister email resent successfully",
     });
   } catch (err) {
     return res.status(500).json({
       status: true,
       message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  console.log(req.body);
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    try {
+      await sendResetMail(user);
+    } catch (err) {
+      return res.status(500).json({
+        status: false,
+        message: `Unable to send password reset email. Please try again. \n Error: ${err}`,
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Password reset email sent",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: false,
+      message: `Unable to send password reset email. Please try again. \n Error: ${err}`,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { password } = req.body;
+  const { token } = req.params;
+
+  try {
+    const base64UrlDecode = (input) => {
+      return input.replace(/\(/g, ".");
+    };
+    const decodedToken = base64UrlDecode(token);
+    const decoded = jwt.verify(
+      decodedToken,
+      process.env.RESET_PASSWORD_TOKEN_SECRET
+    );
+    const { userId } = decoded;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Password reset successful",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: false,
+      message: "Unable to reset password",
     });
   }
 };
@@ -327,7 +458,7 @@ const loginUser = async (req, res) => {
       // }
 
       const userDto = await User.findById(user._id).select(
-        "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+        "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
       );
 
       res.status(200).send(userData);
@@ -375,7 +506,7 @@ const getProfile = async (req, res) => {
     //   postalCode: user.postalCode,
     // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -458,7 +589,7 @@ const updateUserInfo = async (req, res) => {
       postalCode: user.postalCode,
     };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
     res.status(201).send(userDto);
   } catch (error) {
@@ -483,33 +614,8 @@ const updateBasicInfo = async (req, res) => {
     }
 
     if (nin) {
-      user.nin.value = nin;
-
-      const nin = await Nin.create({ nin });
-
-      const { data } = await axios.post(
-        "https://api.verified.africa/sfx-verify/v3/id-service/",
-        {
-          verificationType: "NIN-VERIFY",
-          countryCode: "NG",
-          searchParameter: nin,
-          transactionReference: nin._id,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            userid: process.env.VERIFIED_AFRICA_USERID,
-            apiKey: process.env.VERIFIED_AFRICA_APIKEY,
-          },
-        }
-      );
-
-      const verificationStatus = data.verificationStatus;
-      if (verificationStatus === "VERIFIED") {
-        await Nin.findByIdAndUpdate(nin._id, { ...data.response });
-        user.nin.isVerified = true;
-        user.nin.data = nin._id;
-      }
+      user.ninData.nin = nin;
+      await verifyNin(user);
     }
 
     if (email) {
@@ -553,7 +659,7 @@ const updateBasicInfo = async (req, res) => {
       postalCode: user.postalCode,
     };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
     res.status(200).send(userDto);
@@ -601,7 +707,7 @@ const updateAddress = async (req, res) => {
     await user.save();
 
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType nin bio phoneNumber oplAddress resAddress location avatar balance paymentInfo"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
     res.status(200).send(userDto);
@@ -967,4 +1073,7 @@ module.exports = {
   updateLocation,
   deactivateAccount,
   testRoute,
+  forgotPassword,
+  resetPassword,
+  subProxzeRegistration,
 };

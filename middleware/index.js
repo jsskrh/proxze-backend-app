@@ -147,6 +147,25 @@ async function isAdmin(req, res, next) {
   }
 }
 
+async function isSuperProxze(req, res, next) {
+  try {
+    const user = await User.findById(req.user.id);
+    if (user.userType === "super-proxze") {
+      return next();
+    } else {
+      return res.status(401).json({
+        status: false,
+        message: "You are not authorized",
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: `Server error \n Error: ${err}`,
+    });
+  }
+}
+
 async function isAccManager(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
@@ -331,6 +350,7 @@ module.exports = {
   authToken,
   passwordCheck,
   isAdmin,
+  isSuperProxze,
   isAccManager,
   orgToken,
   isOrgMember,
