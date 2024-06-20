@@ -2672,36 +2672,74 @@ const sendVerificationMail = async (user) => {
 
     const encodedToken = base64UrlEncode(verificationToken);
 
-    // Create sendEmail params
-    var params = {
-      Destination: {
-        ToAddresses: [email],
-      },
-      Message: {
-        Body: {
-          Html: {
-            Charset: "UTF-8",
-            Data: createVerificationMail({
-              firstName,
-              email,
-              encodedToken,
-              liveUrl: process.env.CLIENT_URL,
-            }),
+    if (process.env.ENVIRONMENT !== "stage") {
+      // Create sendEmail params
+      var params = {
+        Destination: {
+          ToAddresses: [email],
+        },
+        Message: {
+          Body: {
+            Html: {
+              Charset: "UTF-8",
+              Data: createVerificationMail({
+                firstName,
+                email,
+                encodedToken,
+                liveUrl: process.env.CLIENT_URL,
+              }),
+            },
+            Text: {
+              Charset: "UTF-8",
+              Data: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+            },
           },
-          Text: {
+          Subject: {
             Charset: "UTF-8",
-            Data: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+            Data: "Verify Your Email",
           },
         },
-        Subject: {
-          Charset: "UTF-8",
-          Data: "Verify Your Email",
-        },
-      },
-      Source: process.env.MAIL_USER,
-    };
+        Source: process.env.MAIL_USER,
+      };
 
-    await sendMail(params);
+      await sendMail(params);
+    } else {
+      let transporter = nodemailer.createTransport({
+        host: "mail.proxze.com",
+        port: 465,
+        secure: true, // use TLS
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+        tls: {
+          // do not fail on invalid certs
+          rejectUnauthorized: false,
+        },
+      });
+
+      const msg = {
+        to: email,
+        from: process.env.MAIL_USER,
+        subject: "Verify Your Email",
+        text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: https://${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
+        html: createVerificationMail({
+          firstName,
+          email,
+          encodedToken,
+          liveUrl: process.env.CLIENT_URL,
+        }),
+      };
+
+      await new Promise((resolve, reject) => {
+        transporter.sendMail(msg, (err, info) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve("Email sent");
+        });
+      });
+    }
   } catch (error) {
     console.log(err);
     return;
@@ -2844,37 +2882,64 @@ const sendRegistrationMail = async (user) => {
       data: { encodedToken, email },
     });
 
-    // Create sendEmail params
-    var params = {
-      Destination: {
-        ToAddresses: [email],
-      },
-      Message: {
-        Body: {
-          Html: {
-            Charset: "UTF-8",
-            // Data: createVerificationMail({
-            //   firstName: email,
-            //   email,
-            //   encodedToken,
-            //   liveUrl: process.env.CLIENT_URL,
-            // }),
-            Data: htmlData,
+    if (process.env.ENVIRONMENT !== "stage") {
+      // Create sendEmail params
+      var params = {
+        Destination: {
+          ToAddresses: [email],
+        },
+        Message: {
+          Body: {
+            Html: {
+              Charset: "UTF-8",
+              Data: htmlData,
+            },
+            Text: {
+              Charset: "UTF-8",
+              Data: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
+            },
           },
-          Text: {
+          Subject: {
             Charset: "UTF-8",
-            Data: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
+            Data: "Verify Your Email",
           },
         },
-        Subject: {
-          Charset: "UTF-8",
-          Data: "Verify Your Email",
-        },
-      },
-      Source: process.env.MAIL_USER,
-    };
+        Source: process.env.MAIL_USER,
+      };
 
-    await sendMail(params);
+      await sendMail(params);
+    } else {
+      let transporter = nodemailer.createTransport({
+        host: "mail.proxze.com",
+        port: 465,
+        secure: true, // use TLS
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+        tls: {
+          // do not fail on invalid certs
+          rejectUnauthorized: false,
+        },
+      });
+
+      const msg = {
+        to: email,
+        from: process.env.MAIL_USER,
+        subject: "Verify Your Email",
+        text: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
+        html: htmlData,
+      };
+
+      await new Promise((resolve, reject) => {
+        transporter.sendMail(msg, (err, info) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve("Email sent");
+        });
+      });
+    }
   } catch (error) {
     console.log(err);
     return;
