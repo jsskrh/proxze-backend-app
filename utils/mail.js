@@ -2863,7 +2863,7 @@ const sendRegistrationMail = async (user) => {
           },
           Text: {
             Charset: "UTF-8",
-            Data: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub?token=${registrationToken}`,
+            Data: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
           },
         },
         Subject: {
