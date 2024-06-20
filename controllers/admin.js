@@ -146,7 +146,8 @@ const resendToken = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+      message: `Unable to send verification email to user. Please try again.`,
+      error: err,
     });
   }
 };
@@ -227,7 +228,8 @@ const sendVerificationToken = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+      message: `Unable to send verification email to user. Please try again.`,
+      error: err,
     });
   }
 };
@@ -445,7 +447,8 @@ const updatePaymentInfo = async (req, res) => {
     console.error(err);
     res.status(500).json({
       status: false,
-      message: `Unable to update payment info. Please try again. \n Error: ${err}`,
+      message: `Unable to update payment info. Please try again.`,
+      error: err,
     });
   }
 };
@@ -504,7 +507,8 @@ const deactivateAccount = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: `Unable to deactivate account. Please try again. \n Error: ${err}`,
+      message: `Unable to deactivate account. Please try again.`,
+      error: err,
     });
   }
 };
@@ -520,7 +524,8 @@ const deleteAccount = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: `Unable to delete account. Please try again. \n Error: ${err}`,
+      message: `Unable to delete account. Please try again.`,
+      error: err,
     });
   }
 };
@@ -544,7 +549,8 @@ const getDashboard = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get earnings. Please try again. \n Error: ${err}`,
+      message: `Unable to get earnings. Please try again.`,
+      error: err,
     });
   }
 };
@@ -622,7 +628,8 @@ const getUsers = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get users. Please try again. \n Error: ${err}`,
+      message: `Unable to get users. Please try again.`,
+      error: err,
     });
   }
 };
@@ -692,7 +699,8 @@ const getTasks = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get tasks. Please try again. \n Error: ${err}`,
+      message: `Unable to get tasks. Please try again.`,
+      error: err,
     });
   }
 };
@@ -765,7 +773,8 @@ const getTransactions = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get transactions. Please try again. \n Error: ${err}`,
+      message: `Unable to get transactions. Please try again.`,
+      error: err,
     });
   }
 };

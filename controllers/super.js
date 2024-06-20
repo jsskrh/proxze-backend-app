@@ -53,7 +53,8 @@ const addProxze = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to add proxy. Please try again. \n Error: ${err}`,
+      message: `Unable to add proxy. Please try again.`,
+      error: err,
     });
   }
 };
@@ -82,7 +83,8 @@ const getSubProxzes = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get proxies. Please try again. \n Error: ${err}`,
+      message: `Unable to get proxies. Please try again.`,
+      error: err,
     });
   }
 };

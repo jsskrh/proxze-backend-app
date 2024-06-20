@@ -41,7 +41,8 @@ const getOrgReqs = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get requests. Please try again. \n Error: ${err}`,
+      message: `Unable to get requests. Please try again.`,
+      error: err,
     });
   }
 };
@@ -62,7 +63,8 @@ const getOrgReq = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get requests. Please try again. \n Error: ${err}`,
+      message: `Unable to get requests. Please try again.`,
+      error: err,
     });
   }
 };
@@ -118,7 +120,8 @@ const createOrgReq = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to create request. Please try again. \n Error: ${err}`,
+      message: `Unable to create request. Please try again.`,
+      error: err,
     });
   }
 };
@@ -159,7 +162,8 @@ const processOrgReq = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to create organization. Please try again. \n Error: ${err}`,
+      message: `Unable to create organization. Please try again.`,
+      error: err,
     });
   }
 };
@@ -202,7 +206,8 @@ const acceptMembership = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to accept membership. Please try again. \n Error: ${err}`,
+      message: `Unable to accept membership. Please try again.`,
+      error: err,
     });
   }
 };
@@ -231,7 +236,8 @@ const rejectMembership = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to reject membership. Please try again. \n Error: ${err}`,
+      message: `Unable to reject membership. Please try again.`,
+      error: err,
     });
   }
 };
@@ -283,7 +289,8 @@ const orgLogin = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to login to organization. Please try again. \n Error: ${err}`,
+      message: `Unable to login to organization. Please try again.`,
+      error: err,
     });
   }
 };
@@ -335,7 +342,8 @@ const addMember = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: true,
-      message: `Unable to loginto organization. Please try again. \n Error: ${err}`,
+      message: `Unable to loginto organization. Please try again.`,
+      error: err,
     });
   }
 };
@@ -357,7 +365,8 @@ const getOrg = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get organization. Please try again. \n Error: ${err}`,
+      message: `Unable to get organization. Please try again.`,
+      error: err,
     });
   }
 };
@@ -372,7 +381,8 @@ const getOrgs = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get organizations. Please try again. \n Error: ${err}`,
+      message: `Unable to get organizations. Please try again.`,
+      error: err,
     });
   }
 };
@@ -395,7 +405,8 @@ const createBulkJob = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to create bulk tasks. Please try again. \n Error: ${err}`,
+      message: `Unable to create bulk tasks. Please try again.`,
+      error: err,
     });
   }
 };
@@ -447,7 +458,8 @@ const acceptBulkJob = async (req, res) => {
     console.error(err);
     return res.status(500).json({
       status: true,
-      message: `Unable to accept bulk tasks. Please try again. \n Error: ${err}`,
+      message: `Unable to accept bulk tasks. Please try again.`,
+      error: err,
     });
   }
 };
@@ -485,7 +497,8 @@ const getBulkJob = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get job. Please try again. \n Error: ${err}`,
+      message: `Unable to get job. Please try again.`,
+      error: err,
     });
   }
 };
@@ -507,7 +520,8 @@ const getAllBulkJobs = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get jobs. Please try again. \n Error: ${err}`,
+      message: `Unable to get jobs. Please try again.`,
+      error: err,
     });
   }
 };
@@ -523,7 +537,8 @@ const removeBulkJob = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to get job. Please try again. \n Error: ${err}`,
+      message: `Unable to get job. Please try again.`,
+      error: err,
     });
   }
 };

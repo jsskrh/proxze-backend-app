@@ -81,7 +81,8 @@ const createUser = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: true,
-      message: `Unable to create user. Please try again. \n Error: ${err}`,
+      message: `Unable to create user. Please try again.`,
+      error: err,
     });
   }
 };
@@ -133,7 +134,8 @@ const subProxzeRegistration = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: true,
-      message: `Unable to complete registration. Please try again. \n Error: ${err}`,
+      message: `Unable to complete registration. Please try again.`,
+      error: err,
     });
   }
 };
@@ -263,7 +265,8 @@ const resendToken = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+      message: `Unable to send verification email to user. Please try again. `,
+      error: err,
     });
   }
 };
@@ -289,7 +292,8 @@ const sendVerificationToken = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+      message: `Unable to send verification email to user. Please try again.`,
+      error: err,
     });
   }
 };
@@ -305,7 +309,8 @@ const testRoute = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: true,
-      message: `Unable to send verification email to user. Please try again. \n Error: ${err}`,
+      message: `Unable to send verification email to user. Please try again.`,
+      error: err,
     });
   }
 };
@@ -329,7 +334,8 @@ const forgotPassword = async (req, res) => {
     } catch (err) {
       return res.status(500).json({
         status: false,
-        message: `Unable to send password reset email. Please try again. \n Error: ${err}`,
+        message: `Unable to send password reset email. Please try again.`,
+        error: err,
       });
     }
 
@@ -341,7 +347,8 @@ const forgotPassword = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: false,
-      message: `Unable to send password reset email. Please try again. \n Error: ${err}`,
+      message: `Unable to send password reset email. Please try again.`,
+      error: err,
     });
   }
 };
@@ -752,7 +759,8 @@ const updatePaymentInfo = async (req, res) => {
     console.error(err);
     res.status(500).json({
       status: false,
-      message: `Unable to update payment info. Please try again. \n Error: ${err}`,
+      message: `Unable to update payment info. Please try again. `,
+      error: err,
     });
   }
 };
@@ -1052,7 +1060,8 @@ const getDashboard = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get earnings. Please try again. \n Error: ${err}`,
+      message: `Unable to get earnings. Please try again. `,
+      error: err,
     });
   }
 };

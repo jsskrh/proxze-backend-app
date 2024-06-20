@@ -110,7 +110,8 @@ const transfer = async (req, res) => {
 
     return res.status(500).json({
       status: false,
-      message: `Unable to perform transfer. Please try again. \n Error: ${err}`,
+      message: `Unable to perform transfer. Please try again.`,
+      error: err,
     });
   }
 };
@@ -177,7 +178,8 @@ const deposit = async (req, res) => {
 
     return res.status(500).json({
       status: false,
-      message: `Unable to deposit funds. Please try again. \n Error: ${err}`,
+      message: `Unable to deposit funds. Please try again.`,
+      error: err,
     });
   }
 };
@@ -244,7 +246,8 @@ const withdraw = async (req, res) => {
 
     return res.status(500).json({
       status: false,
-      message: `Unable to withdraw funds. Please try again. \n Error: ${err}`,
+      message: `Unable to withdraw funds. Please try again.`,
+      error: err,
     });
   }
 };
@@ -354,7 +357,8 @@ const getEarnings = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       status: false,
-      message: `Unable to get earnings. Please try again. \n Error: ${err}`,
+      message: `Unable to get earnings. Please try again.`,
+      error: err,
     });
   }
 };

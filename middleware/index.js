@@ -142,7 +142,8 @@ async function isAdmin(req, res, next) {
   } catch (err) {
     res.status(500).json({
       status: false,
-      message: `Server error \n Error: ${err}`,
+      message: `Server error`,
+      error: err,
     });
   }
 }
@@ -161,7 +162,8 @@ async function isSuperProxze(req, res, next) {
   } catch (err) {
     res.status(500).json({
       status: false,
-      message: `Server error \n Error: ${err}`,
+      message: `Server error`,
+      error: err,
     });
   }
 }
