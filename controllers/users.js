@@ -391,6 +391,7 @@ const resetPassword = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: "Unable to reset password",
+      error: err,
     });
   }
 };
@@ -470,18 +471,23 @@ const loginUser = async (req, res) => {
 
       res.status(200).send(userData);
     } else {
-      res.status(401).send("Invalid Credentials");
+      return res.status(401).json({
+        status: false,
+        message: "Invalid credentials",
+      });
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).send(error);
+    return res.status(401).json({
+      status: false,
+      message: "Server error",
+      error,
+    });
   }
 };
 
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    console.log(user);
     // const userData = {
     //   id: user._id,
     //   firstName: user.firstName,

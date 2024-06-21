@@ -26,9 +26,10 @@ const bulkTaskSchema = new mongoose.Schema(
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     data: [
       {
+        accountId: { type: String, required: true, trim: true },
         name: { type: String, required: true },
         address: { type: String, required: true },
-        gender: { type: String, required: true },
+        gender: { type: String, required: true, trim: true },
         location: {
           label: { type: String, required: true, trim: true },
           coords: {

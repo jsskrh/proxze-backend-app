@@ -20,7 +20,7 @@ const taskCreator = async ({
   endDate,
   principal,
   user,
-  enterprise,
+  tier,
   organization,
 }) => {
   console.log(type, description, bill, location);
@@ -51,7 +51,7 @@ const taskCreator = async ({
     organization,
     rating: getAverageRating(user.reviews),
     timeline: [{ status: "created", timestamp: Date.now() }],
-    enterprise: enterprise ?? false,
+    tier: tier ?? "basic",
   });
 
   // const usersWithinRadius = await User.find({

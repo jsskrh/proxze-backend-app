@@ -34,6 +34,12 @@ const taskSchema = new mongoose.Schema(
       state: { type: String, trim: true },
       lga: { type: String, trim: true },
     },
+    tier: {
+      type: String,
+      default: "basic",
+      trim: true,
+      enum: ["basic", "enterprise"],
+    },
     enterprise: { type: Boolean, default: false, trim: true },
     // occupation: { type: String, required: true, trim: true },
     // searchRange: { type: String, required: true, trim: true },
