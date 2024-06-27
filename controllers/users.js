@@ -519,7 +519,7 @@ const getProfile = async (req, res) => {
     //   postalCode: user.postalCode,
     // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {

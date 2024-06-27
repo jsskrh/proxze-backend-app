@@ -59,6 +59,47 @@ const addProxze = async (req, res) => {
   }
 };
 
+const addSingleProxze = async (email, userId) => {
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error(`User already exists with email: ${email}`);
+  }
+
+  const user = await User.create({
+    email,
+    superProxze: userId,
+    userType: "proxze",
+  });
+
+  await User.findByIdAndUpdate(userId, {
+    $push: { subProxzes: user._id },
+  });
+
+  await sendRegistrationMail(user);
+};
+
+const addBulkProxze = async (req, res) => {
+  try {
+    const { emails } = req.body; // Expecting an array of emails
+
+    const addAllProxzes = emails.map((email) =>
+      addSingleProxze(email, req.user.id)
+    );
+    await Promise.all(addAllProxzes);
+
+    return res.status(201).json({
+      status: true,
+      message: "Successfully added all proxies",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to add some or all proxies. Please try again.`,
+      error: err.message || err,
+    });
+  }
+};
+
 const getSubProxzes = async (req, res) => {
   try {
     const { id } = req.user;
@@ -91,5 +132,6 @@ const getSubProxzes = async (req, res) => {
 
 module.exports = {
   addProxze,
+  addBulkProxze,
   getSubProxzes,
 };

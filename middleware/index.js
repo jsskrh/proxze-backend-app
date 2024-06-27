@@ -151,7 +151,7 @@ async function isAdmin(req, res, next) {
 async function isSuperProxze(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
-    if (user.userType === "super-proxze") {
+    if (user.userType === "super-proxze" || user.userType === "admin") {
       return next();
     } else {
       return res.status(401).json({

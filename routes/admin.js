@@ -7,7 +7,7 @@ const Admin = require("../controllers/admin");
 const auth = require("../middleware/index");
 
 router.get("/users", auth.authToken, auth.isAdmin, Admin.getUsers);
-router.get("/users/:userId", auth.authToken, auth.isAdmin, Admin.getUser);
+router.get("/users/:userId", auth.authToken, auth.isSuperProxze, Admin.getUser);
 router.patch(
   "/users/:userId/deactivate",
   auth.authToken,
