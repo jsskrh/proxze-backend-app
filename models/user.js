@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
       data: { type: mongoose.Schema.Types.ObjectId, ref: "Nin" },
       isVerified: {
         type: Boolean,
-        default: false,
+        default: true,
       },
     },
     password: {
