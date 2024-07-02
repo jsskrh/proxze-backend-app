@@ -103,6 +103,18 @@ const addBulkProxze = async (req, res) => {
 const getSubProxzes = async (req, res) => {
   try {
     const { id } = req.user;
+    const {
+      page = 1,
+      search,
+      isVerified,
+      state,
+      lga,
+      sortBy = "createdAt",
+      orderBy = "desc",
+      startDate,
+      endDate,
+    } = req.query;
+    const perPage = 15;
 
     const user = await User.findById(id).populate("subProxzes");
 
@@ -113,19 +125,77 @@ const getSubProxzes = async (req, res) => {
       });
     }
 
-    console.log("User:", user);
-    console.log("SubProxzes:", user.subProxzes);
+    // Build the query object
+    const query = {};
+    if (search) query.name = { $regex: search, $options: "i" };
+    if (isVerified !== undefined && isVerified !== "")
+      query.isVerified = isVerified;
+    if (state !== undefined && state !== "") query.state = state;
+    if (lga !== undefined && lga !== "") query.lga = lga;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    console.log(
+      page,
+      search,
+      isVerified,
+      state,
+      lga,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate
+    );
+    console.log(query);
+
+    // Apply the query and sort to subProxzes
+    let subProxzes = user.subProxzes.filter((subProxze) => {
+      return Object.keys(query).every((key) => {
+        if (key === "createdAt") {
+          const createdAt = new Date(subProxze.createdAt);
+          return (
+            (!query.createdAt.$gte || createdAt >= query.createdAt.$gte) &&
+            (!query.createdAt.$lte || createdAt <= query.createdAt.$lte)
+          );
+        } else if (typeof query[key] === "object" && query[key].$regex) {
+          return query[key].$regex.test(subProxze[key]);
+        } else {
+          return subProxze[key] === query[key];
+        }
+      });
+    });
+
+    // Sort and paginate the results
+    subProxzes = subProxzes.sort((a, b) => {
+      if (orderBy === "asc") {
+        return a[sortBy] > b[sortBy] ? 1 : -1;
+      } else {
+        return a[sortBy] < b[sortBy] ? 1 : -1;
+      }
+    });
+    console.log(subProxzes);
+    const count = subProxzes.length;
+    const proxzes = subProxzes.slice((page - 1) * perPage, page * perPage);
+    const hasNextPage = page * perPage < count;
 
     return res.status(200).json({
       status: true,
       message: "Successfully fetched proxies",
-      data: user.subProxzes,
+      data: {
+        count,
+        proxzes,
+        hasNextPage,
+      },
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
-      status: true,
+      status: false,
       message: `Unable to get proxies. Please try again.`,
-      error: err,
+      error: err.message,
     });
   }
 };

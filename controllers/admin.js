@@ -607,6 +607,7 @@ const getUsers = async (req, res) => {
     const userCount = await User.countDocuments(query);
     const proxzeCount = await User.countDocuments({ userType: "proxze" });
     const principalCount = await User.countDocuments({ userType: "principal" });
+    const superCount = await User.countDocuments({ userType: "super-proxze" });
     const staffCount = await User.countDocuments({ userType: "admin" });
     const users = await User.find(query)
       .sort(sortQuery)
@@ -619,7 +620,7 @@ const getUsers = async (req, res) => {
       status: true,
       message: "Users fetched",
       data: {
-        data: { proxzeCount, principalCount, staffCount },
+        data: { proxzeCount, principalCount, superCount, staffCount },
         count,
         users,
         hasNextPage,
