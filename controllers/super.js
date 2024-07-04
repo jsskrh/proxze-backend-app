@@ -102,44 +102,8 @@ const addBulkProxze = async (req, res) => {
 
 const getSubProxzes = async (req, res) => {
   try {
-    const { id } = req.user;
     const {
       page = 1,
-      search,
-      isVerified,
-      state,
-      lga,
-      sortBy = "createdAt",
-      orderBy = "desc",
-      startDate,
-      endDate,
-    } = req.query;
-    const perPage = 15;
-
-    const user = await User.findById(id).populate("subProxzes");
-
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found",
-      });
-    }
-
-    // Build the query object
-    const query = {};
-    if (search) query.name = { $regex: search, $options: "i" };
-    if (isVerified !== undefined && isVerified !== "")
-      query.isVerified = isVerified;
-    if (state !== undefined && state !== "") query.state = state;
-    if (lga !== undefined && lga !== "") query.lga = lga;
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
-    }
-
-    console.log(
-      page,
       search,
       isVerified,
       state,
@@ -147,43 +111,58 @@ const getSubProxzes = async (req, res) => {
       sortBy,
       orderBy,
       startDate,
-      endDate
-    );
-    console.log(query);
+      endDate,
+    } = req.query;
+    const perPage = 15;
+    let query = {};
+    let sortQuery = {};
 
-    // Apply the query and sort to subProxzes
-    let subProxzes = user.subProxzes.filter((subProxze) => {
-      return Object.keys(query).every((key) => {
-        if (key === "createdAt") {
-          const createdAt = new Date(subProxze.createdAt);
-          return (
-            (!query.createdAt.$gte || createdAt >= query.createdAt.$gte) &&
-            (!query.createdAt.$lte || createdAt <= query.createdAt.$lte)
-          );
-        } else if (typeof query[key] === "object" && query[key].$regex) {
-          return query[key].$regex.test(subProxze[key]);
-        } else {
-          return subProxze[key] === query[key];
-        }
+    query = {
+      $and: [
+        { superProxze: req.user.id },
+        { userType: "proxze" },
+        {
+          $or: [
+            { firstName: { $regex: search, $options: "i" } },
+            { lastName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    if (isVerified !== undefined && isVerified !== "")
+      query.$and.push({ isVerified });
+    if (state !== undefined && state !== "")
+      query.$and.push({
+        $or: [{ "resAddress.state": state }, { "address.state": state }],
       });
-    });
+    if (lga !== undefined && lga !== "")
+      query.$and.push({
+        $or: [{ "resAddress.lga": lga }, { "address.lga": lga }],
+      });
+    if (startDate !== undefined && startDate !== "")
+      query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    if (endDate !== undefined && endDate !== "")
+      query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    if (sortBy !== undefined && sortBy !== "")
+      sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
 
-    // Sort and paginate the results
-    subProxzes = subProxzes.sort((a, b) => {
-      if (orderBy === "asc") {
-        return a[sortBy] > b[sortBy] ? 1 : -1;
-      } else {
-        return a[sortBy] < b[sortBy] ? 1 : -1;
-      }
-    });
-    console.log(subProxzes);
-    const count = subProxzes.length;
-    const proxzes = subProxzes.slice((page - 1) * perPage, page * perPage);
+    const userCount = await User.countDocuments(query);
+    const proxzeCount = await User.countDocuments({ userType: "proxze" });
+    const principalCount = await User.countDocuments({ userType: "principal" });
+    const superCount = await User.countDocuments({ userType: "super-proxze" });
+    const staffCount = await User.countDocuments({ userType: "admin" });
+    const proxzes = await User.find(query)
+      .sort(sortQuery)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+    const count = await User.countDocuments(query);
     const hasNextPage = page * perPage < count;
-
-    return res.status(200).json({
+    console.log(query, proxzes);
+    return res.status(201).json({
       status: true,
-      message: "Successfully fetched proxies",
+      message: "Sub proxzes fetched",
       data: {
         count,
         proxzes,
@@ -191,11 +170,10 @@ const getSubProxzes = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({
       status: false,
-      message: `Unable to get proxies. Please try again.`,
-      error: err.message,
+      message: `Unable to get users. Please try again.`,
+      error: err,
     });
   }
 };
