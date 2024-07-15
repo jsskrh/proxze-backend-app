@@ -118,6 +118,10 @@ const userSchema = new mongoose.Schema(
         "super-proxze",
       ],
     },
+    referralToken: {
+      type: String,
+      unique: true,
+    },
     balance: {
       type: mongoose.Decimal128,
       required: true,

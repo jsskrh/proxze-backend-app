@@ -21,15 +21,36 @@ const {
   sendReregisterMail,
 } = require("../utils/mail");
 const axios = require("axios");
+const { v4: uuidv4 } = require("uuid");
 const { verifyNin } = require("../utils/nin");
 const { verificationSeeder } = require("../utils/seed/verification");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+const generateUniqueReferralToken = async () => {
+  let token;
+  let tokenExists = true;
+
+  while (tokenExists) {
+    token = uuidv4();
+    tokenExists = await User.exists({ referralToken: token });
+  }
+
+  return token;
+};
+
 const createUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, phoneNumber, nin, userType } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phoneNumber,
+      nin,
+      userType,
+      referralToken,
+    } = req.body;
     if (
       !firstName ||
       !lastName ||
@@ -53,9 +74,22 @@ const createUser = async (req, res) => {
       });
     }
 
+    let superProxzeId = null;
+    if (referralToken) {
+      const superProxze = await User.findOne({ referralToken });
+      if (!superProxze) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid referral token",
+        });
+      }
+      superProxzeId = superProxze._id;
+    }
+
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-    const result = await User.create({
+
+    const newUser = {
       firstName,
       lastName,
       email,
@@ -67,7 +101,24 @@ const createUser = async (req, res) => {
           ? "admin"
           : userType,
       password: hashedPassword,
-    });
+    };
+
+    if (userType === "super-proxze") {
+      const referralToken = await generateUniqueReferralToken();
+      newUser.referralToken = referralToken;
+    }
+
+    if (superProxzeId && userType === "proxze") {
+      newUser.superProxze = superProxzeId;
+    }
+
+    const result = await User.create(newUser);
+
+    if (superProxzeId) {
+      await User.findByIdAndUpdate(superProxzeId, {
+        $push: { subProxzes: result._id },
+      });
+    }
 
     await sendVerificationMail(result);
     await verifyNin(result);
@@ -519,7 +570,7 @@ const getProfile = async (req, res) => {
     //   postalCode: user.postalCode,
     // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
