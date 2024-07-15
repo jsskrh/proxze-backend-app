@@ -441,8 +441,8 @@ const acceptBulkJob = async (req, res) => {
     job.bill = {
       rate,
       subtotal: rate * job.data.length,
-      serviceFee: 2000,
-      total: rate * job.data.length + 2000,
+      serviceFee: 0,
+      total: rate * job.data.length + 0,
     };
     job.status = "approved";
     job.approvedBy = req.user.id;
