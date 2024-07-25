@@ -50,6 +50,12 @@ const createUser = async (req, res) => {
       nin,
       userType,
       referralToken,
+
+      // ----- PROXZE BUSINESS -----
+      agency,
+      areaOfOperation,
+      intendedProxy,
+      subscription,
     } = req.body;
     if (
       !firstName ||
@@ -102,6 +108,14 @@ const createUser = async (req, res) => {
           : userType,
       password: hashedPassword,
     };
+
+    if (agency) {
+      // ----- PROXZE BUSINESS -----
+      newUser.agency = agency;
+      newUser.areaOfOperation = areaOfOperation;
+      newUser.intendedProxy = intendedProxy;
+      newUser.subscription = subscription;
+    }
 
     if (userType === "super-proxze") {
       const referralToken = await generateUniqueReferralToken();

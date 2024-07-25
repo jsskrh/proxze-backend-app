@@ -116,6 +116,7 @@ const userSchema = new mongoose.Schema(
         "support",
         "manager",
         "super-proxze",
+        "sub-principal",
       ],
     },
     referralToken: {
@@ -185,6 +186,11 @@ const userSchema = new mongoose.Schema(
         // default: [0, 0],
       },
     },
+
+    // ----- PROXZE BUSINESS -----
+    agency: { type: String },
+    intendedProxy: { type: String },
+    subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
   },
   { timestamps: true }
 );

@@ -2,7 +2,12 @@ const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema(
   {
-    type: { type: String, required: true, trim: true },
+    type: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ["verification", "oneToMany", "manyToOne", "manyToMany"],
+    },
     description: { type: String, required: true, trim: true },
     bill: { type: Number, required: true, trim: true },
     // educationLevel: { type: String, required: true, trim: true },
@@ -146,6 +151,16 @@ const taskSchema = new mongoose.Schema(
       },
     ],
     lastViewed: { type: Date, trim: true },
+
+    // ----- PROXZE BUSINESS -----
+    title: { type: String, required: true },
+    businessStatus: {
+      type: String,
+      enum: ["rejected", "inProgress", "completed"],
+      required: true,
+    },
+    image: { type: String },
+    video: { type: String },
   },
   { timestamps: true }
 );
