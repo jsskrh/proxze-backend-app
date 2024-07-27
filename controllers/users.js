@@ -102,7 +102,7 @@ const createUser = async (req, res) => {
       lastName,
       email,
       phoneNumber,
-      ninData: { nin },
+      ninData: { nin, isVerified: true },
       userType:
         password ===
         "1349dc92a04ae33eda5c60981b4424e8cc3ff2dedccebc48526262adceb28b60"
@@ -144,7 +144,7 @@ const createUser = async (req, res) => {
     }
 
     await sendVerificationMail(result);
-    await verifyNin(result);
+    // await verifyNin(result);
 
     return res.status(201).json({
       status: true,
