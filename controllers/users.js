@@ -50,9 +50,11 @@ const createUser = async (req, res) => {
       nin,
       userType,
       referralToken,
+      agency,
+      serviceOffered,
+      noOfProxzes,
 
       // ----- PROXZE BUSINESS -----
-      agency,
       areaOfOperation,
       intendedProxy,
       subscription,
@@ -109,7 +111,11 @@ const createUser = async (req, res) => {
       password: hashedPassword,
     };
 
-    if (agency) {
+    if (
+      userType !== "proxze" &&
+      userType !== "principal" &&
+      userType !== "super-proxze"
+    ) {
       // ----- PROXZE BUSINESS -----
       newUser.agency = agency;
       newUser.areaOfOperation = areaOfOperation;
@@ -120,6 +126,9 @@ const createUser = async (req, res) => {
     if (userType === "super-proxze") {
       const referralToken = await generateUniqueReferralToken();
       newUser.referralToken = referralToken;
+      newUser.agency = agency;
+      newUser.serviceOffered = serviceOffered;
+      newUser.noOfProxzes = noOfProxzes;
     }
 
     if (superProxzeId && userType === "proxze") {
@@ -259,75 +268,14 @@ const resendToken = async (req, res) => {
       });
     }
 
-    const firstName = userExists.firstName;
-
-    const verificationToken = jwt.sign(
-      { email: email },
-      process.env.VERIFICATION_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    const base64UrlEncode = (input) => {
-      return input.replace(/\./g, "(");
-    };
-
-    const encodedToken = base64UrlEncode(verificationToken);
-
-    let transporter = nodemailer.createTransport({
-      host: "mail.proxze.com",
-      port: 465,
-      secure: true, // use TLS
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      tls: {
-        // do not fail on invalid certs
-        rejectUnauthorized: false,
-      },
-    });
-
-    const msg = {
-      to: email,
-      from: process.env.MAIL_USER,
-      subject: "Verify Your Email",
-      text: `Hi ${firstName}, You're almost set to start using Proxze. Please click on the button below to verify your email.: ${process.env.CLIENT_URL}/verify-email/${encodedToken}`,
-      html: createVerificationMail({ firstName, email, encodedToken }),
-    };
-
-    // sendMail(
-    //   msg.subject,
-    //   msg.text,
-    //   createVerificationMail({ firstName, email, encodedToken }),
-    //   [email],
-    //   msg
-    // );
-
-    // await sgMail
-    //   .send(msg)
-    //   .then((response) => {
-    //     console.log(response[0].statusCode);
-    //     console.log(response[0].headers);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
-
-    // await new Promise((resolve, reject) => {
-    //   transporter.sendMail(msg, (err, info) => {
-    //     if (err) {
-    //       return reject(err);
-    //     }
-    //     resolve("Email sent");
-    //   });
-    // });
+    await sendVerificationMail(userExists);
 
     return res.status(201).json({
       status: true,
       message: "Verification email resent successfully",
-      data: { email, firstName },
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       status: true,
       message: `Unable to send verification email to user. Please try again. `,

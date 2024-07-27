@@ -121,7 +121,6 @@ const userSchema = new mongoose.Schema(
     },
     referralToken: {
       type: String,
-      unique: true,
     },
     balance: {
       type: mongoose.Decimal128,
@@ -186,9 +185,11 @@ const userSchema = new mongoose.Schema(
         // default: [0, 0],
       },
     },
+    agency: { type: String },
+    serviceOffered: { type: String },
+    noOfProxzes: { type: Number },
 
     // ----- PROXZE BUSINESS -----
-    agency: { type: String },
     intendedProxy: { type: String },
     subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
   },

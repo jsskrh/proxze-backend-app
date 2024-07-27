@@ -153,11 +153,10 @@ const taskSchema = new mongoose.Schema(
     lastViewed: { type: Date, trim: true },
 
     // ----- PROXZE BUSINESS -----
-    title: { type: String, required: true },
+    title: { type: String },
     businessStatus: {
       type: String,
       enum: ["rejected", "inProgress", "completed"],
-      required: true,
     },
     image: { type: String },
     video: { type: String },
