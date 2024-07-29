@@ -1086,6 +1086,7 @@ const getDashboard = async (req, res) => {
 };
 
 module.exports = {
+  generateUniqueReferralToken,
   createUser,
   verifyEmail,
   sendVerificationToken,

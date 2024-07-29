@@ -32,6 +32,7 @@ const requestRoutes = require("./routes/business/request");
 const archiveRoutes = require("./routes/business/archive");
 const permissionRoutes = require("./routes/business/permission");
 const subscriptionRoutes = require("./routes/business/subscription");
+const { assignSuperTokens } = require("./utils/seed/superToken");
 
 const app = express();
 
@@ -106,6 +107,7 @@ mongoose
     console.log("Successfully connected to Database.");
     // if (process.env.ENVIRONMENT === "prod") verificationSeeder();
     configSeeder();
+    assignSuperTokens();
   })
   .catch((err) => {
     console.error("Unable to connect to Database.", err);
