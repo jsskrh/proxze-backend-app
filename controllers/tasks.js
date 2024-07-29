@@ -331,6 +331,7 @@ const getTaskpool = async (req, res) => {
       }).sort({
         createdAt: -1,
       });
+      console.log("test", tasks);
     } else {
       tasks = await Task.find({
         paymentStatus: false,
