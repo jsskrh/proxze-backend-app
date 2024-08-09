@@ -2672,7 +2672,7 @@ const sendVerificationMail = async (user) => {
     };
 
     const encodedToken = base64UrlEncode(verificationToken);
-
+   console.log(encodedToken);
     // if (process.env.ENVIRONMENT !== "stage") {
     //   // Create sendEmail params
     //   var params = {
@@ -2949,6 +2949,63 @@ const sendRegistrationMail = async (user) => {
   }
 };
 
+const sendGroupRegistrationMail = async (user) => {
+  try {
+    const { email, group } = user;
+    const registrationToken = jwt.sign(
+      { group, email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+ console.log(registrationToken);
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+    const htmlData = await generateTemplate({
+      name: "register",
+      data: { encodedToken, email },
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Verify Your Email",
+      text: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
+      html: htmlData,
+    };
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve("Email sent");
+      });
+    });
+    // }
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
 module.exports = {
   createVerificationMail,
   sendMail,
@@ -2956,4 +3013,5 @@ module.exports = {
   sendRegistrationMail,
   sendResetMail,
   sendReregisterMail,
+  sendGroupRegistrationMail
 };

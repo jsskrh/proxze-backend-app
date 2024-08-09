@@ -173,6 +173,7 @@ const userSchema = new mongoose.Schema(
     },
     token: [{ type: String }],
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     location: {
       type: {
@@ -185,12 +186,14 @@ const userSchema = new mongoose.Schema(
         // default: [0, 0],
       },
     },
-    agency: { type: String },
-    serviceOffered: { type: String },
+   
     noOfProxzes: { type: Number },
 
     // ----- PROXZE BUSINESS -----
+    agency: { type: String },
+    serviceOffered: { type: String },
     intendedProxy: { type: String },
+    areaOfOperation: { type: String },
     subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
   },
   { timestamps: true }
