@@ -11,6 +11,9 @@ exports.createRequest = async (req, res) => {
     description,
     principalId,
     groupId,
+    title,
+    class:className,
+    schedule
   } = req.body;
   try {
     const request = new Request({
@@ -23,6 +26,9 @@ exports.createRequest = async (req, res) => {
       description,
       principalId,
       groupId,
+      title,
+      class:className,
+      schedule
     });
     await request.save();
     res.status(201).json(request);

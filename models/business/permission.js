@@ -10,7 +10,7 @@ const PermissionSchema = new mongoose.Schema({
     default: { view: false, deactivate: false, activate: false },
   },
   class: {
-    type: String,
+    type: [String],
     enum: ["class1", "class2", "class3", "class4", "class5"],
   },
   principalId: {
@@ -18,6 +18,6 @@ const PermissionSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Permission", PermissionSchema);
