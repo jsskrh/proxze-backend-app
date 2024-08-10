@@ -22,6 +22,7 @@ const taskCreator = async ({
   user,
   tier,
   organization,
+  referralToken,
 }) => {
   console.log(type, description, bill, location);
   const newTask = await Task.create({
@@ -49,6 +50,7 @@ const taskCreator = async ({
     endDate,
     principal,
     organization,
+    referralToken,
     rating: getAverageRating(user.reviews),
     timeline: [{ status: "created", timestamp: Date.now() }],
     tier: tier ?? "basic",

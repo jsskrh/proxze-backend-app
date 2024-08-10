@@ -17,6 +17,24 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 dotenv.config();
 
+const generateUniqueReferralToken = async () => {
+  let token;
+  let tokenExists = true;
+
+  const generateHexadecimal = () => {
+    return Math.floor(Math.random() * 0xffffffff)
+      .toString(16)
+      .padStart(8, "0");
+  };
+
+  while (tokenExists) {
+    token = generateHexadecimal();
+    tokenExists = await Task.exists({ referralToken: token });
+  }
+
+  return token;
+};
+
 const createTask = async (req, res) => {
   try {
     const {
@@ -40,6 +58,7 @@ const createTask = async (req, res) => {
 
     const principal = req.user.id;
     const user = await User.findById(req.user.id).populate({ path: "reviews" });
+    const referralToken = await generateUniqueReferralToken();
 
     const createResult = await taskCreator({
       type,
@@ -50,6 +69,7 @@ const createTask = async (req, res) => {
       endDate,
       principal,
       user,
+      referralToken,
     });
 
     // const newTask = await Task.create({

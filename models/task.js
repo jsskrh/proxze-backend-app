@@ -132,7 +132,6 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Transaction",
     },
-
     attachments: [
       // {
       //   type: mongoose.Schema.Types.ObjectId,
@@ -151,6 +150,7 @@ const taskSchema = new mongoose.Schema(
       },
     ],
     lastViewed: { type: Date, trim: true },
+    referralToken: { type: String, required: true },
 
     // ----- PROXZE BUSINESS -----
     title: { type: String },
