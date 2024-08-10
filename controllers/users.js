@@ -65,8 +65,8 @@ const createUser = async (req, res) => {
       !email ||
       !password ||
       !phoneNumber ||
-      !nin ||
-      !userType
+      !userType ||
+      (userType === "proxze" && !nin)
     ) {
       return res.status(400).json({
         status: false,
