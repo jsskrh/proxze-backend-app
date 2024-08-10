@@ -129,6 +129,7 @@ const createUser = async (req, res) => {
       newUser.agency = agency;
       newUser.serviceOffered = serviceOffered;
       newUser.noOfProxzes = noOfProxzes;
+      newUser.superPerc = 15;
     }
 
     if (superProxzeId && userType === "proxze") {
@@ -626,10 +627,14 @@ const updateUserInfo = async (req, res) => {
 
 const updateBasicInfo = async (req, res) => {
   // function to patch user data, firstName, lastName, NIN, email, phoneNumber
-  const { firstName, lastName, nin, email, phoneNumber } = req.body;
+  const { avatar, firstName, lastName, nin, email, phoneNumber } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
+
+    if (avatar) {
+      user.avatar = avatar;
+    }
 
     if (firstName) {
       user.firstName = firstName;
@@ -685,7 +690,7 @@ const updateBasicInfo = async (req, res) => {
       postalCode: user.postalCode,
     };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
+      "_id avatar firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
     res.status(200).send(userDto);
@@ -747,20 +752,19 @@ const updateAddress = async (req, res) => {
 };
 
 const updatePaymentInfo = async (req, res) => {
-  const { oldAccountNumber, accountNumber, bank, bankCode, accountName } =
-    req.body;
+  const { accountNumber, bank, bankCode, accountName } = req.body;
 
   try {
-    const user = await User.findById(req.user.id);
-    if (
-      user.paymentInfo.accountNumber &&
-      oldAccountNumber !== user.paymentInfo.accountNumber
-    ) {
-      return res.status(401).json({
-        status: false,
-        message: "Incorrect old account number.",
-      });
-    }
+    // const user = await User.findById(req.user.id);
+    // if (
+    //   user.paymentInfo.accountNumber &&
+    //   oldAccountNumber !== user.paymentInfo.accountNumber
+    // ) {
+    //   return res.status(401).json({
+    //     status: false,
+    //     message: "Incorrect old account number.",
+    //   });
+    // }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,

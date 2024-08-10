@@ -21,6 +21,29 @@ const { verifyNin } = require("../utils/nin");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+const updateSuperPerc = async (req, res) => {
+  const { superPerc } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { superPerc },
+      {
+        new: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).send({ error: "User not found" });
+    }
+
+    res.status(201).send(user);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send({ error: "Server error" });
+  }
+};
+
 const verifyEmail = async (req, res) => {
   const { token } = req.params;
 
@@ -320,11 +343,7 @@ const getUser = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId);
 
-    return res.status(201).json({
-      status: true,
-      message: "User fetched successfully",
-      data: user,
-    });
+    return res.status(201).json(user);
   } catch (error) {
     res.status(500).send(error);
   }
@@ -515,7 +534,7 @@ const deactivateAccount = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.user.id);
+    await User.findByIdAndDelete(req.params.userId);
 
     return res.status(201).json({
       status: true,
@@ -863,4 +882,5 @@ module.exports = {
   bulkEmailVerification,
   bulkNinVerification,
   deleteUnverifiedNinUsers,
+  updateSuperPerc,
 };

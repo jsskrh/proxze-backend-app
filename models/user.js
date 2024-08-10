@@ -174,6 +174,18 @@ const userSchema = new mongoose.Schema(
     token: [{ type: String }],
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    superPerc: {
+      type: Number,
+      min: 0,
+      max: 100,
+      validate: {
+        validator: function (v) {
+          return v >= 0 && v <= 100;
+        },
+        message: (props) =>
+          `${props.value} is not a valid percentage. It must be between 0 and 100.`,
+      },
+    },
     location: {
       type: {
         type: String,

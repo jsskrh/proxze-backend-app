@@ -9,6 +9,12 @@ const auth = require("../middleware/index");
 router.get("/users", auth.authToken, auth.isAdmin, Admin.getUsers);
 router.get("/users/:userId", auth.authToken, auth.isSuperProxze, Admin.getUser);
 router.patch(
+  "/users/:userId/super-perc",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.updateSuperPerc
+);
+router.patch(
   "/users/:userId/deactivate",
   auth.authToken,
   auth.isAdmin,

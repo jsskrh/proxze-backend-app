@@ -23,7 +23,7 @@ router.put("/settings/user-info", auth.authToken, Users.updateUserInfo);
 router.put(
   "/settings/payment-info",
   auth.authToken,
-  auth.passwordCheck,
+  // auth.passwordCheck,
   Users.updatePaymentInfo
 );
 router.put(
