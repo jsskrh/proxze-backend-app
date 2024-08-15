@@ -14,5 +14,17 @@ router.post(
   Super.addBulkProxze
 );
 router.get("/users", auth.authToken, auth.isSuperProxze, Super.getSubProxzes);
+router.patch(
+  "/users/:userId/approve",
+  auth.authToken,
+  auth.isSuperProxze,
+  Super.approveProxze
+);
+router.patch(
+  "/users/:userId/reject",
+  auth.authToken,
+  auth.isSuperProxze,
+  Super.rejectProxze
+);
 
 module.exports = router;

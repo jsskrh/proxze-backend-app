@@ -174,6 +174,8 @@ const userSchema = new mongoose.Schema(
     token: [{ type: String }],
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    superApproved: { type: Boolean },
+    superRejected: { type: Boolean },
     superPerc: {
       type: Number,
       min: 0,

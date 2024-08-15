@@ -106,6 +106,7 @@ const getSubProxzes = async (req, res) => {
       page = 1,
       search,
       isVerified,
+      isApproved,
       state,
       lga,
       sortBy,
@@ -133,6 +134,11 @@ const getSubProxzes = async (req, res) => {
 
     if (isVerified !== undefined && isVerified !== "")
       query.$and.push({ isVerified });
+    if (isApproved !== undefined && isApproved !== "") {
+      query.$and.push({ superApproved: isApproved });
+    } else {
+      query.$and.push({ superApproved: { $exists: false } });
+    }
     if (state !== undefined && state !== "")
       query.$and.push({
         $or: [{ "resAddress.state": state }, { "address.state": state }],
@@ -178,8 +184,76 @@ const getSubProxzes = async (req, res) => {
   }
 };
 
+const approveProxze = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        superProxze: req.user.id,
+      },
+      { superApproved: true },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: `Unable to approve user. User does not exist.`,
+      });
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Sub proxze approved",
+      data: user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to approve user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const rejectProxze = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        superProxze: req.user.id,
+      },
+      { superApproved: false },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: `Unable to reject user. User does not exist.`,
+      });
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Sub proxze rejected",
+      data: user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to reject user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 module.exports = {
   addProxze,
   addBulkProxze,
   getSubProxzes,
+  approveProxze,
+  rejectProxze,
 };

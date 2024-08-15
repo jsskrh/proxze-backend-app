@@ -440,6 +440,13 @@ const loginUser = async (req, res) => {
     });
   }
 
+  if (user.superProxze && !user.superApproved) {
+    return res.status(401).json({
+      status: false,
+      message: "Account has not been approved by super proxy.",
+    });
+  }
+
   try {
     if (await bcrypt.compare(req.body.password, user.password)) {
       const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
