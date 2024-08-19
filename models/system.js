@@ -26,6 +26,14 @@ const systemSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
+    paymentPercentage: {
+      default: 85,
+      type: Number,
+      required: true,
+      trim: true,
+      min: 0,
+      max: 100,
+    },
   },
   { timestamps: true }
 );
