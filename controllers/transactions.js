@@ -108,6 +108,8 @@ const transfer = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
 
+    console.error("Transfer Error:", err);
+
     return res.status(500).json({
       status: false,
       message: `Unable to perform transfer. Please try again.`,
