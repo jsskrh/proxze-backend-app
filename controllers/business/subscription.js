@@ -1,9 +1,16 @@
 const Subscription = require("../../models/business/subscription");
 
 exports.createSubscription = async (req, res) => {
-  const { type } = req.body;
+  const { type, duration, principalId } = req.body;
   try {
-    const subscription = new Subscription({ type });
+    const existingSubscription = await Subscription.findOne({
+      principalId,
+    });
+    if (existingSubscription) {
+      await Subscription.deleteOne(existingSubscription);
+    }
+
+    const subscription = new Subscription({ type, duration, principalId });
     await subscription.save();
     res.status(201).json(subscription);
   } catch (error) {
@@ -13,8 +20,8 @@ exports.createSubscription = async (req, res) => {
 
 exports.updateSubscription = async (req, res) => {
   try {
-    const subscription = await Subscription.findByIdAndUpdate(
-      req.params.id,
+    const subscription = await Subscription.findOneAndUpdate(
+      { principalId: req.params.id },
       req.body,
       { new: true }
     );
@@ -26,16 +33,18 @@ exports.updateSubscription = async (req, res) => {
 
 exports.deleteSubscription = async (req, res) => {
   try {
-    await Subscription.findByIdAndDelete(req.params.id);
+    await Subscription.findOneAndDelete({ principalId: req.params.id });
     res.json({ message: "Subscription deleted successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-exports.getSubscriptionById = async (req, res) => {
+exports.getSubscriptionByPrincipalId = async (req, res) => {
   try {
-    const subscription = await Subscription.findById(req.params.id);
+    const subscription = await Subscription.findOne({
+      principalId: req.params.id,
+    });
     res.json(subscription);
   } catch (error) {
     res.status(400).json({ error: error.message });

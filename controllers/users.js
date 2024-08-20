@@ -56,16 +56,18 @@ const createUser = async (req, res) => {
 
       // ----- PROXZE BUSINESS -----
       areaOfOperation,
+      isProxzeBusiness,
       intendedProxy,
       subscription,
     } = req.body;
+    console.log(req.body);
     if (
-      !firstName ||
-      !lastName ||
+      // !firstName ||
+      // !lastName ||
       !email ||
       !password ||
       !phoneNumber ||
-      !nin ||
+      // !nin ||
       !userType
     ) {
       return res.status(400).json({
@@ -111,15 +113,12 @@ const createUser = async (req, res) => {
       password: hashedPassword,
     };
 
-    if (
-      userType !== "proxze" &&
-      userType !== "principal" &&
-      userType !== "super-proxze"
-    ) {
+    if (isProxzeBusiness) {
       // ----- PROXZE BUSINESS -----
       newUser.agency = agency;
       newUser.areaOfOperation = areaOfOperation;
       newUser.intendedProxy = intendedProxy;
+      newUser.serviceOffered = serviceOffered;
       newUser.subscription = subscription;
     }
 
@@ -143,7 +142,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    await sendVerificationMail(result);
+    // await sendVerificationMail(result);
     // await verifyNin(result);
 
     return res.status(201).json({
@@ -228,11 +227,12 @@ const verifyEmail = async (req, res) => {
     );
     const email = decoded.email;
 
-    await User.findOneAndUpdate({ email }, { isVerified: true });
+    const user = await User.findOneAndUpdate({ email }, { isVerified: true });
 
     return res.status(201).json({
       status: true,
       message: "Email verified successfully",
+      user,
     });
   } catch (err) {
     return res.status(400).json({
@@ -329,7 +329,6 @@ const testRoute = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-  console.log(req.body);
   const { email } = req.body;
 
   try {
@@ -532,7 +531,7 @@ const getProfile = async (req, res) => {
     //   postalCode: user.postalCode,
     // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken"
+      "_id firstName lastName email agency serviceOffered areaOfOperation intendedProxy userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -626,7 +625,18 @@ const updateUserInfo = async (req, res) => {
 
 const updateBasicInfo = async (req, res) => {
   // function to patch user data, firstName, lastName, NIN, email, phoneNumber
-  const { firstName, lastName, nin, email, phoneNumber } = req.body;
+  const {
+    firstName,
+    lastName,
+    nin,
+    email,
+    phoneNumber,
+    avatar,
+    agency,
+    serviceOffered,
+    areaOfOperation,
+    intendedProxy,
+  } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
@@ -650,6 +660,23 @@ const updateBasicInfo = async (req, res) => {
 
     if (phoneNumber) {
       user.phoneNumber = phoneNumber;
+    }
+
+    if (avatar) {
+      user.avatar = avatar;
+    }
+
+    if (agency) {
+      user.agency = agency;
+    }
+    if (serviceOffered) {
+      user.serviceOffered = serviceOffered;
+    }
+    if (areaOfOperation) {
+      user.areaOfOperation = areaOfOperation;
+    }
+    if (intendedProxy) {
+      user.intendedProxy = intendedProxy;
     }
 
     await user.save();
