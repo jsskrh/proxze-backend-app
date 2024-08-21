@@ -517,7 +517,7 @@ const updateLocation = async (req, res) => {
 
 const deactivateAccount = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user.id, { isDeactivated: true });
+    await User.findByIdAndUpdate(req.params.userId, { isDeactivated: true });
 
     return res.status(201).json({
       status: true,
@@ -544,6 +544,23 @@ const deleteAccount = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: `Unable to delete account. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const makeAdmin = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.userId, { userType: "admin" });
+
+    return res.status(201).json({
+      status: true,
+      message: "User type successfully updated",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: `Unable to change user's user type. Please try again.`,
       error: err,
     });
   }
@@ -883,4 +900,5 @@ module.exports = {
   bulkNinVerification,
   deleteUnverifiedNinUsers,
   updateSuperPerc,
+  makeAdmin,
 };

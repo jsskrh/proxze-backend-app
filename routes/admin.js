@@ -26,6 +26,12 @@ router.delete(
   auth.isAdmin,
   Admin.deleteAccount
 );
+router.patch(
+  "/users/:userId/user-type",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.makeAdmin
+);
 router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
 router.get(
   "/transactions",
