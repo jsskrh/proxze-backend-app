@@ -566,6 +566,30 @@ const makeAdmin = async (req, res) => {
   }
 };
 
+const removeProxzeSuperProxze = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.userId, {
+      $unset: {
+        superProxze: "",
+        superApproved: "",
+        superRejected: "",
+        superPerc: "",
+      },
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Super proxze removed successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: `Unable to remove super proxze. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const getDashboard = async (req, res) => {
   try {
     const users = await User.countDocuments();
@@ -901,4 +925,5 @@ module.exports = {
   deleteUnverifiedNinUsers,
   updateSuperPerc,
   makeAdmin,
+  removeProxzeSuperProxze,
 };

@@ -32,6 +32,12 @@ router.patch(
   auth.isAdmin,
   Admin.makeAdmin
 );
+router.patch(
+  "/users/:userId/remove-super",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.removeProxzeSuperProxze
+);
 router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
 router.get(
   "/transactions",
