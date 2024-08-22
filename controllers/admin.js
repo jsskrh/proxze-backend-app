@@ -566,7 +566,7 @@ const makeAdmin = async (req, res) => {
   }
 };
 
-const removeProxzeSuperProxze = async (req, res) => {
+const unlinkSuper = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.userId, {
       $unset: {
@@ -925,5 +925,5 @@ module.exports = {
   deleteUnverifiedNinUsers,
   updateSuperPerc,
   makeAdmin,
-  removeProxzeSuperProxze,
+  unlinkSuper,
 };

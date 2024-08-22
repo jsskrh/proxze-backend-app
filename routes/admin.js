@@ -36,7 +36,7 @@ router.patch(
   "/users/:userId/remove-super",
   auth.authToken,
   auth.isAdmin,
-  Admin.removeProxzeSuperProxze
+  Admin.unlinkSuper
 );
 router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
 router.get(
