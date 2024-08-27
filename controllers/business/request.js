@@ -1,4 +1,7 @@
 const Request = require("../../models/business/request");
+const User = require("../../models/user");
+const { taskCreator } = require("../../utils/tasks");
+const getLatLng = require("../../utils/location");
 
 exports.createRequest = async (req, res) => {
   const {
@@ -12,10 +15,37 @@ exports.createRequest = async (req, res) => {
     principalId,
     groupId,
     title,
-    class:className,
-    schedule
+    class: className,
+    schedule,
+    tasks,
   } = req.body;
   try {
+    console.log(tasks);
+
+    const principal = await User.findById(principalId).populate({
+      path: "reviews",
+    });
+    for (const task of JSON.parse(tasks)) {
+      const { lat, lng } = await getLatLng(task.address);
+      singleTask = {
+        type: type,
+        description: task.description,
+        principal: principalId,
+        group: groupId,
+        startDate: task.startDate,
+        endDate: task.endDate,
+        location: {
+          coords: {
+            lat,
+            lng,
+          },
+        },
+        isProxzeBusiness: true,
+        user: principal,
+      };
+      await taskCreator(singleTask);
+    }
+
     const request = new Request({
       type,
       network,
@@ -27,12 +57,14 @@ exports.createRequest = async (req, res) => {
       principalId,
       groupId,
       title,
-      class:className,
-      schedule
+      class: className,
+      schedule,
     });
+
     await request.save();
     res.status(201).json(request);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: error.message });
   }
 };
