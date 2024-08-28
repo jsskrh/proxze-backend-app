@@ -255,6 +255,36 @@ const updateLastViewed = async (req, res) => {
   }
 };
 
+const uploadVideo = async (req, res) => {
+  try {
+    const { videoUrl, name } = req.body;
+    const video = { url: videoUrl, name, timestamp: new Date() };
+    await Task.findOneAndUpdate(
+      {
+        _id: req.params.taskId,
+        "timeline.status": "started",
+      },
+      {
+        $push: {
+          videos: video,
+        },
+      },
+      { new: true }
+    );
+
+    return res.status(201).json({
+      status: true,
+      message: "Video uploaded successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+      error,
+    });
+  }
+};
+
 const approveRejectRequest = async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
@@ -338,7 +368,7 @@ const getTaskpool = async (req, res) => {
     if (user.userType === "proxze" && userLocation.coordinates) {
       tasks = await Task.find({
         // "timeline.status": "approved",
-        paymentStatus: false,
+        // paymentStatus: false,
         proxze: { $exists: false },
         "location.geometry": {
           $geoWithin: {
@@ -1382,4 +1412,5 @@ module.exports = {
   getTaskHistory,
   handleLive,
   acceptTask,
+  uploadVideo,
 };

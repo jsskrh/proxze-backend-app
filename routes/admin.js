@@ -39,6 +39,12 @@ router.patch(
   Admin.unlinkSuper
 );
 router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
+router.patch(
+  "/tasks/:taskId/remove-proxze",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.removeProxze
+);
 router.get(
   "/transactions",
   auth.authToken,

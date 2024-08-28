@@ -89,5 +89,12 @@ router.put(
   // auth.isOwnerProxze,
   Tasks.handleLive
 );
+router.patch(
+  "/upload/:taskId",
+  // auth.authToken,
+  // auth.isProxze,
+  // auth.isOwnerProxze,
+  Tasks.uploadVideo
+);
 
 module.exports = router;

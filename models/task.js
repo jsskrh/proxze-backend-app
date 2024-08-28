@@ -51,7 +51,7 @@ const taskSchema = new mongoose.Schema(
     // skillLevel: { type: String, required: true, trim: true },
     // timeBlock: { type: String, required: true, trim: true },
     // yearsOfExperience: { type: String, required: true, trim: true },
-    live: { type: Boolean, default: false, trim: true },
+    isLive: { type: Boolean, default: false, trim: true },
     timeline: [
       {
         // status: { type: String, required: true, trim: true },
@@ -132,21 +132,14 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Transaction",
     },
-    attachments: [
-      // {
-      //   type: mongoose.Schema.Types.ObjectId,
-      //   ref: "Stream",
-      // },
+    videos: [
       {
-        type: { type: String },
+        name: { type: String },
         url: { type: String },
-        location: { type: String },
         timestamp: {
           type: Date,
           trim: true,
         },
-        size: { type: Number },
-        duration: { type: Number },
       },
     ],
     lastViewed: { type: Date, trim: true },

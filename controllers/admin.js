@@ -766,6 +766,34 @@ const getTasks = async (req, res) => {
   }
 };
 
+const removeProxze = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    await Task.findByIdAndUpdate(
+      taskId,
+      {
+        $unset: { proxze: "" },
+        status: "created",
+        "offers.$[].isRejected": true, // Set all offers to rejected
+        timeline: [{ status: "created", timestamp: new Date() }], // Reset timeline status to 'created'
+      },
+      { new: true }
+    );
+
+    return res.status(201).json({
+      status: true,
+      message: "Proxze romoved",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get remove proxze. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const getTransactions = async (req, res) => {
   try {
     const {
@@ -926,4 +954,5 @@ module.exports = {
   updateSuperPerc,
   makeAdmin,
   unlinkSuper,
+  removeProxze,
 };
