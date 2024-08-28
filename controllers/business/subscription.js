@@ -1,7 +1,7 @@
 const Subscription = require("../../models/business/subscription");
 
 exports.createSubscription = async (req, res) => {
-  const { type, duration, principalId } = req.body;
+  const { type, duration, principalId, paymentRef, amount } = req.body;
   try {
     const existingSubscription = await Subscription.findOne({
       principalId,
@@ -10,7 +10,13 @@ exports.createSubscription = async (req, res) => {
       await Subscription.deleteOne(existingSubscription);
     }
 
-    const subscription = new Subscription({ type, duration, principalId });
+    const subscription = new Subscription({
+      type,
+      duration,
+      principalId,
+      paymentRef,
+      amount,
+    });
     await subscription.save();
     res.status(201).json(subscription);
   } catch (error) {
