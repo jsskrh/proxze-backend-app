@@ -4,7 +4,10 @@ const User = require("../models/user");
 const Review = require("../models/review");
 const Notification = require("../models/notification");
 const Stream = require("../models/stream");
-const { getAverageRating } = require("../utils/helpers");
+const {
+  getAverageRating,
+  getDistanceFromLatLonInKm,
+} = require("../utils/helpers");
 const {
   createTaskObject,
   createTaskpoolObject,
@@ -309,53 +312,132 @@ const approveRejectRequest = async (req, res) => {
   }
 };
 
+// const getTaskpool = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id);
+//     const userLocation = user.location;
+//     let tasks;
+
+//     if (user.userType === "proxze" && userLocation.coordinates) {
+//       tasks = await Task.find({
+//         // "timeline.status": "approved",
+//         paymentStatus: false,
+//         proxze: { $exists: false },
+//         "location.geometry": {
+//           $geoWithin: {
+//             $centerSphere: [
+//               [userLocation.coordinates[0], userLocation.coordinates[1]],
+//               5 / 6371, // 5km radius in radians
+//             ],
+//           },
+//         },
+//       }).sort({
+//         createdAt: -1,
+//       });
+//       console.log("test", tasks);
+//     } else {
+//       tasks = await Task.find({
+//         paymentStatus: false,
+//         proxze: { $exists: false },
+//       }).sort({
+//         createdAt: -1,
+//       });
+//     }
+
+//     const mappedTasks = tasks.map((task) => {
+//       return createTaskpoolObject(task);
+//     });
+
+//     return res.status(201).json({
+//       status: true,
+//       message: "Taskpool fetched",
+//       data: tasks,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
 const getTaskpool = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    const userLocation = user.location;
-    let tasks;
+    const user = await User.findById(req.user.id).populate("group");
+    const userGroupId = user.group ? user.group._id : null;
 
-    if (user.userType === "proxze" && userLocation.coordinates) {
-      tasks = await Task.find({
-        // "timeline.status": "approved",
-        paymentStatus: false,
-        proxze: { $exists: false },
-        "location.geometry": {
-          $geoWithin: {
-            $centerSphere: [
-              [userLocation.coordinates[0], userLocation.coordinates[1]],
-              5 / 6371, // 5km radius in radians
-            ],
-          },
+    let taskQuery = {
+      $or: [
+        {
+          type: "oneToMany",
+          group: userGroupId,
         },
-      }).sort({
-        createdAt: -1,
-      });
-      console.log("test", tasks);
-    } else {
-      tasks = await Task.find({
-        paymentStatus: false,
-        proxze: { $exists: false },
-      }).sort({
-        createdAt: -1,
-      });
-    }
+        {
+          type: "manyToMany",
+          group: userGroupId,
+        },
+        {
+          type: "manyToOne",
+          group: userGroupId,
+        },
+        {
+          type: "oneToMany",
+          group: { $ne: userGroupId },
+        },
+        {
+          type: "manyToMany",
+          group: { $ne: userGroupId },
+        },
+        {
+          type: "manyToOne",
+          group: { $ne: userGroupId },
+        },
 
-    const mappedTasks = tasks.map((task) => {
-      return createTaskpoolObject(task);
+        {
+          group: null,
+          request: null,
+        },
+
+        {
+          request: null,
+        },
+      ],
+    };
+
+    const tasks = await Task.find(taskQuery).populate({
+      path: "request",
+      match: {
+        $or: [{ network: { $in: ["internal", "both"] } }, { network: null }],
+      },
     });
 
-    return res.status(201).json({
-      status: true,
-      message: "Taskpool fetched",
-      data: tasks,
-    });
+    const filteredTasks = tasks
+      .filter((task) => task.request !== null || task.request === undefined)
+      .filter((task) => {
+        if (task.type === "manyToOne") {
+          const taskLocation = task.location?.coordinates;
+          const userLocation = user.location?.coordinates;
+
+          if (taskLocation && userLocation) {
+            const distance = getDistanceFromLatLonInKm(
+              userLocation[0],
+              userLocation[1],
+              taskLocation[0],
+              taskLocation[1]
+            );
+
+            return distance <= 5;
+          }
+          return true;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.status(200).json({ tasks: filteredTasks });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      status: false,
-      message: "Server error",
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 

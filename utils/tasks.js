@@ -24,6 +24,7 @@ const taskCreator = async ({
   organization,
   group,
   isProxzeBusiness,
+  request,
 }) => {
   const newTask = await Task.create({
     type,
@@ -55,6 +56,7 @@ const taskCreator = async ({
     tier: tier ?? "basic",
     group,
     isProxzeBusiness,
+    request,
   });
 
   // const usersWithinRadius = await User.find({
