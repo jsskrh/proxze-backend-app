@@ -1492,4 +1492,5 @@ module.exports = {
   handleLive,
   acceptTask,
   uploadVideo,
+  generateUniqueReferralToken,
 };

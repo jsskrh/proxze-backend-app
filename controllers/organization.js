@@ -424,6 +424,8 @@ const acceptBulkJob = async (req, res) => {
     futureDate.setDate(currentDate.getDate() + 7);
 
     for (const obj of job.data) {
+      const referralToken = await Tasks.generateUniqueReferralToken();
+
       const newTask = await taskCreator({
         startDate: currentDate,
         endDate: futureDate,
@@ -435,6 +437,7 @@ const acceptBulkJob = async (req, res) => {
         principal: job.createdBy,
         organization: job.organization._id,
         tier: "enterprise",
+        referralToken,
       });
       createdTasks.push(newTask._id);
     }
