@@ -430,7 +430,7 @@ const acceptBulkJob = async (req, res) => {
         location: obj.location,
         description: `Verify ${obj.name}, ${obj.gender}`,
         bill: rate,
-        type: "Verification",
+        type: "verification",
         user: job.organization,
         principal: job.createdBy,
         organization: job.organization._id,

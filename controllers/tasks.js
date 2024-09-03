@@ -147,7 +147,7 @@ const createTask = async (req, res) => {
       userId: req.user.id,
       entityId: createResult._id,
       entityType: "task",
-      details: `${user._id} created a new ${task.type} task`,
+      details: `${user._id} created a new ${createResult.type} task`,
     });
 
     return res.status(201).json({
