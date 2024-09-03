@@ -251,7 +251,7 @@ const verifyEmail = async (req, res) => {
     await createLog({
       action: "update",
       userId: user._id,
-      entityId: result._id,
+      entityId: user._id,
       entityType: "user",
       details: `${user._id} verified their account`,
     });
