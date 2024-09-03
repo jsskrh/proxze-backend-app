@@ -2767,36 +2767,29 @@ const sendResetMail = async (user) => {
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${encodedToken}`;
 
-    // Create sendEmail params
-    var params = {
-      Destination: {
-        ToAddresses: [email],
-      },
-      Message: {
-        Body: {
-          Html: {
-            Charset: "UTF-8",
-            Data: createResetMail({
-              firstName,
-              email,
-              encodedToken,
-              resetUrl,
-            }),
-          },
-          Text: {
-            Charset: "UTF-8",
-            Data: `Hi ${firstName}, You have requested to reset your password. Please click on the link below to reset your password: ${resetUrl}`,
-          },
-        },
-        Subject: {
-          Charset: "UTF-8",
-          Data: "Reset password",
-        },
-      },
-      Source: process.env.MAIL_USER,
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Reset password",
+      text: `Hi ${firstName}, You have requested to reset your password. Please click on the link below to reset your password: ${resetUrl}`,
+      html: createResetMail({
+        firstName,
+        email,
+        encodedToken,
+        resetUrl,
+      }),
     };
 
-    await sendMail(params);
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+          console.error(err);
+        }
+        console.log("email sent");
+        resolve("Email sent");
+      });
+    });
   } catch (err) {
     console.log(err);
     return err;
