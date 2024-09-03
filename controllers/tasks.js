@@ -15,6 +15,7 @@ const { sendPushNotification } = require("../utils/pushNotifications");
 const { Expo } = require("expo-server-sdk");
 const axios = require("axios");
 const mongoose = require("mongoose");
+const { createLog } = require("../utils/utilities");
 dotenv.config();
 
 const generateUniqueReferralToken = async () => {
@@ -140,6 +141,15 @@ const createTask = async (req, res) => {
     // if (Expo.isExpoPushToken(expoPushToken)) {
     //   await sendPushNotification(expoPushToken, message);
     // }
+
+    await createLog({
+      action: "create",
+      userId: req.user.id,
+      entityId: createResult._id,
+      entityType: "task",
+      details: `${user._id} created a new ${task.type} task`,
+    });
+
     return res.status(201).json({
       status: true,
       message: "Task created successfully",
@@ -314,7 +324,7 @@ const approveRejectRequest = async (req, res) => {
           title: "Task update",
           body:
             req.params.type === "approved"
-              ? `Your ${task.type} task has been approved`
+              ? `Your ${task.type} task was approved`
               : `Your ${task.type} task was rejected`,
           data: { screenName: "Task", params: { taskId: task._id } },
         });
@@ -344,6 +354,19 @@ const approveRejectRequest = async (req, res) => {
 
     await User.findByIdAndUpdate(task.principal._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    const details =
+      req.params.type === "approved"
+        ? `${task._id} was approved`
+        : `${task._id} was rejected`;
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details,
     });
 
     return res.status(201).json({
@@ -644,6 +667,14 @@ const makeOffer = async (req, res) => {
       $push: { notifications: newNotification._id },
     });
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.user.id} expressed interest for task ${task._id}`,
+    });
+
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
@@ -743,6 +774,22 @@ const acceptTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.user.id} has been assigned to task ${task._id}`,
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was approved`,
     });
 
     await session.commitTransaction();
@@ -879,6 +926,14 @@ const rejectOffer = async (req, res) => {
       });
     }
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.body.proxze}'s offer was rejected`,
+    });
+
     return res.status(201).json({
       status: true,
       message: `Proxze has been rejected`,
@@ -989,6 +1044,14 @@ const startTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newProxzeNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was started`,
     });
 
     return res.status(201).json({
@@ -1125,6 +1188,14 @@ const completeTask = async (req, res) => {
       $push: { notifications: newNotification._id },
     });
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was completed`,
+    });
+
     return res.status(201).json({
       status: true,
       message: `Task has been completed`,
@@ -1208,6 +1279,14 @@ const confirmTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was confirmed`,
     });
 
     return res.status(201).json({

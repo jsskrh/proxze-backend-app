@@ -18,6 +18,7 @@ const {
 } = require("../utils/mail");
 const System = require("../models/system");
 const { verifyNin } = require("../utils/nin");
+const Log = require("../models/log");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -932,6 +933,69 @@ const deleteUnverifiedNinUsers = async (req, res) => {
   }
 };
 
+const getSystemLogs = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      search,
+      type,
+      purpose,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate,
+    } = req.query;
+    const perPage = 15;
+    let query = {};
+    let sortQuery = {};
+
+    query = {
+      $and: [
+        {
+          $or: [
+            { summary: { $regex: search, $options: "i" } },
+            { transactionSummary: { $regex: search, $options: "i" } },
+            { reference: { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    // if (type !== undefined && type !== "")
+    //   query.$and.push({ transactionType: type });
+    // if (purpose !== undefined && purpose !== "") query.$and.push({ purpose });
+    // // if (state !== undefined && state !== "")
+    // //   query.$and.push({ "location.state": state });
+    // // if (lga !== undefined && lga !== "")
+    // //   query.$and.push({ "location.lga": lga });
+    // if (startDate !== undefined && startDate !== "")
+    //   query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    // if (endDate !== undefined && endDate !== "")
+    //   query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    // if (sortBy !== undefined && sortBy !== "")
+    //   sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
+
+    const logCount = await Log.countDocuments();
+    const logs = await Log.find();
+
+    // const count = await Transaction.countDocuments(query);
+    // const hasNextPage = page * perPage < count;
+
+    return res.status(201).json({
+      data: logs,
+      // count,
+      // transactions,
+      // hasNextPage,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get system logs. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 module.exports = {
   verifyEmail,
   sendVerificationToken,
@@ -955,4 +1019,5 @@ module.exports = {
   makeAdmin,
   unlinkSuper,
   removeProxze,
+  getSystemLogs,
 };

@@ -70,5 +70,6 @@ router.patch(
   auth.isAdmin,
   Admin.bulkNinVerification
 );
+router.get("/system/logs", auth.authToken, auth.isAdmin, Admin.getSystemLogs);
 
 module.exports = router;

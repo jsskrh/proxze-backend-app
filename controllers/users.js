@@ -24,6 +24,7 @@ const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
 const { verifyNin } = require("../utils/nin");
 const { verificationSeeder } = require("../utils/seed/verification");
+const { createLog } = require("../utils/utilities");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -147,6 +148,14 @@ const createUser = async (req, res) => {
     await sendVerificationMail(result);
     // await verifyNin(result);
 
+    await createLog({
+      action: "create",
+      userId: result._id,
+      entityId: result._id,
+      entityType: "user",
+      details: `${result._id} created a ${result.userType} account`,
+    });
+
     return res.status(201).json({
       status: true,
       message: "User created successfully",
@@ -201,6 +210,14 @@ const subProxzeRegistration = async (req, res) => {
 
     await verifyNin(user);
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} registered their account`,
+    });
+
     return res.status(201).json({
       status: true,
       message: "Registration completed successfully",
@@ -229,7 +246,15 @@ const verifyEmail = async (req, res) => {
     );
     const email = decoded.email;
 
-    await User.findOneAndUpdate({ email }, { isVerified: true });
+    const user = await User.findOneAndUpdate({ email }, { isVerified: true });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: result._id,
+      entityType: "user",
+      details: `${user._id} verified their account`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -345,6 +370,14 @@ const forgotPassword = async (req, res) => {
 
     try {
       await sendResetMail(user);
+
+      await createLog({
+        action: "other",
+        userId: user._id,
+        entityId: user._id,
+        entityType: "user",
+        details: `A password reset token was sent to ${user._id}`,
+      });
     } catch (err) {
       return res.status(500).json({
         status: false,
@@ -395,6 +428,14 @@ const resetPassword = async (req, res) => {
 
     user.password = hashedPassword;
     await user.save();
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} changed their password`,
+    });
 
     return res.status(200).json({
       status: true,
@@ -489,6 +530,14 @@ const loginUser = async (req, res) => {
       const userDto = await User.findById(user._id).select(
         "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
       );
+
+      await createLog({
+        action: "other",
+        userId: user._id,
+        entityId: user._id,
+        entityType: "user",
+        details: `${user._id} logged in`,
+      });
 
       res.status(200).send(userData);
     } else {
@@ -625,6 +674,15 @@ const updateUserInfo = async (req, res) => {
     const userDto = await User.findById(user._id).select(
       "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their account`,
+    });
+
     res.status(201).send(userDto);
   } catch (error) {
     console.error(error.message);
@@ -700,6 +758,14 @@ const updateBasicInfo = async (req, res) => {
       "_id avatar firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their basic info`,
+    });
+
     res.status(200).send(userDto);
   } catch (error) {
     console.error(error);
@@ -748,6 +814,14 @@ const updateAddress = async (req, res) => {
       "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their address`,
+    });
+
     res.status(200).send(userDto);
   } catch (error) {
     console.error(error);
@@ -773,17 +847,25 @@ const updatePaymentInfo = async (req, res) => {
     //   });
     // }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       req.user.id,
       { paymentInfo: { accountNumber, bank, bankCode, accountName } },
       { new: true }
     );
 
     const userData = {
-      bank: updatedUser.paymentInfo.bank,
-      accountNumber: hideChars(updatedUser.paymentInfo.accountNumber),
+      bank: user.paymentInfo.bank,
+      accountNumber: hideChars(user.paymentInfo.accountNumber),
     };
-    console.log(userData);
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their payment info`,
+    });
+
     res.status(200).send(userData);
   } catch (err) {
     console.error(err);
@@ -802,7 +884,17 @@ const updatePassword = async (req, res) => {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await User.findByIdAndUpdate(req.user.id, { password: hashedPassword });
+    const user = await User.findByIdAndUpdate(req.user.id, {
+      password: hashedPassword,
+    });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their password`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -841,6 +933,14 @@ const updateLocation = async (req, res) => {
 const deactivateAccount = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, { isDeactivated: true });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} deactivated their account`,
+    });
 
     return res.status(201).json({
       status: true,
