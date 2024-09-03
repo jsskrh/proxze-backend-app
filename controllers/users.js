@@ -532,7 +532,7 @@ const loginUser = async (req, res) => {
       );
 
       await createLog({
-        action: "other",
+        action: "auth",
         userId: user._id,
         entityId: user._id,
         entityType: "user",

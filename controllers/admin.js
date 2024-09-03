@@ -976,7 +976,9 @@ const getSystemLogs = async (req, res) => {
     //   sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
 
     const logCount = await Log.countDocuments();
-    const logs = await Log.find();
+    const logs = await Log.find().sort({
+      createdAt: -1,
+    });
 
     // const count = await Transaction.countDocuments(query);
     // const hasNextPage = page * perPage < count;
