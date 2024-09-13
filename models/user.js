@@ -46,6 +46,14 @@ const userSchema = new mongoose.Schema(
       // required: true,
       // unique: true,
     },
+    phoneToken: {
+      type: String,
+      required: true,
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
     address: {
       street: {
         type: String,
@@ -217,3 +225,5 @@ userSchema.index({
 });
 const User = mongoose.model("User", userSchema);
 module.exports = User;
+// moxnYh-qiwta9-funfyd
+// bartef-dafxy0-tinNep

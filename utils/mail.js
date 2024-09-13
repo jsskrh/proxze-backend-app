@@ -8,6 +8,7 @@ var AWS = require("aws-sdk");
 AWS.config.update({ region: process.env.AWS_BUCKET_REGION });
 const { renderFile } = require("ejs");
 const { join } = require("path");
+const { default: axios } = require("axios");
 
 const createResetMail = ({ firstName, encodedToken, email, resetUrl }) => {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http:/= /www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -2744,7 +2745,30 @@ const sendVerificationMail = async (user) => {
     });
     // }
   } catch (error) {
-    console.log(err);
+    console.log(error);
+    throw new Error(error);
+    return;
+  }
+};
+
+const sendVerificationText = async (user) => {
+  try {
+    const { data } = await axios.post(
+      "https://v3.api.termii.com/api/sms/send",
+      {
+        to: "234" + user?.phoneNumber,
+        from: "Proxze",
+        sms: `Your verification code is ${user?.phoneToken}`,
+        type: "plain",
+        channel: "generic",
+        api_key: process.env.TERMII_KEY,
+      }
+    );
+    console.log(data);
+    return;
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
     return;
   }
 };
@@ -2949,4 +2973,5 @@ module.exports = {
   sendRegistrationMail,
   sendResetMail,
   sendReregisterMail,
+  sendVerificationText,
 };

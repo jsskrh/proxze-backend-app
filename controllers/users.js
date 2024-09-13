@@ -19,6 +19,7 @@ const {
   sendVerificationMail,
   sendResetMail,
   sendReregisterMail,
+  sendVerificationText,
 } = require("../utils/mail");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
@@ -35,6 +36,20 @@ const generateUniqueReferralToken = async () => {
   while (tokenExists) {
     token = uuidv4();
     tokenExists = await User.exists({ referralToken: token });
+  }
+
+  return token;
+};
+
+const generateUniquePhoneToken = async () => {
+  let token;
+  let tokenExists = true;
+
+  while (tokenExists) {
+    token = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, "0");
+    tokenExists = await User.exists({ phoneToken: token });
   }
 
   return token;
@@ -110,6 +125,7 @@ const createUser = async (req, res) => {
           ? "admin"
           : userType,
       password: hashedPassword,
+      phoneToken: await generateUniquePhoneToken(),
     };
 
     if (
@@ -337,6 +353,57 @@ const sendVerificationToken = async (req, res) => {
   }
 };
 
+const sendPhoneVerificationToken = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const token = await generateUniquePhoneToken();
+    user.phoneToken = token;
+    user.save();
+    await sendVerificationText(user);
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification text sent successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification text to user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const verifyPhone = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user.id,
+      phoneToken: req.query.otp,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        status: true,
+        message: `Invalid verification token.`,
+      });
+    } else {
+      user.phoneVerified = true;
+      user.save();
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification successful",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to verify user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const testRoute = async (req, res) => {
   try {
     await sendReregisterMail();
@@ -558,38 +625,8 @@ const loginUser = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    // const userData = {
-    //   id: user._id,
-    //   firstName: user.firstName,
-    //   lastName: user.lastName,
-    //   email: user.email,
-    //   userType: user.userType,
-    //   bio: user.bio,
-    //   phoneNumber: user.phoneNumber,
-    //   address: user.address,
-    //   state: user.state,
-    //   country: user.country,
-    //   lga: user.lga,
-    //   balance: user.balance,
-    //   avatar: user.avatar,
-    //   nin: user.nin,
-    //   isVerified: user.isVerified,
-    //   ninVerified: user.ninVerified,
-    //   createdAt: user.createdAt,
-    //   updatedAt: user.updatedAt,
-    //   paymentInfo: {
-    //     bank: user.paymentInfo?.bank,
-    //     accountName: user.paymentInfo?.accountName,
-    //     bankCode: user.paymentInfo?.bankCode,
-    //     accountNumber:
-    //       user.paymentInfo?.accountNumber &&
-    //       hideChars(user.paymentInfo?.accountNumber),
-    //   },
-    //   rating: getAverageRating(user.reviews),
-    //   postalCode: user.postalCode,
-    // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken"
+      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken phoneVerified"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -720,6 +757,7 @@ const updateBasicInfo = async (req, res) => {
 
     if (phoneNumber) {
       user.phoneNumber = phoneNumber;
+      user.phoneVerified = false;
     }
 
     await user.save();
@@ -1198,6 +1236,7 @@ const getDashboard = async (req, res) => {
 
 module.exports = {
   generateUniqueReferralToken,
+  generateUniquePhoneToken,
   createUser,
   verifyEmail,
   sendVerificationToken,
@@ -1216,4 +1255,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   subProxzeRegistration,
+  sendPhoneVerificationToken,
+  verifyPhone,
 };
