@@ -2672,7 +2672,7 @@ const sendVerificationMail = async (user, isProxzeBusiness) => {
     };
 
     const encodedToken = base64UrlEncode(verificationToken);
-    console.log(encodedToken);
+
     // if (process.env.ENVIRONMENT !== "stage") {
     //   // Create sendEmail params
     //   var params = {
@@ -2772,7 +2772,7 @@ const sendResetMail = async (user) => {
       : process.env.CLIENT_URL;
 
     const resetUrl = `${baseUrl}/reset-password/${encodedToken}`;
-  console.log(resetUrl);
+  
     var params = {
       Destination: {
         ToAddresses: [email],
