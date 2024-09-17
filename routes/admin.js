@@ -7,6 +7,12 @@ const Admin = require("../controllers/admin");
 const auth = require("../middleware/index");
 
 router.get("/users", auth.authToken, auth.isAdmin, Admin.getUsers);
+router.get(
+  "/users-location",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.getProxzesLocation
+);
 router.get("/users/:userId", auth.authToken, auth.isSuperProxze, Admin.getUser);
 router.patch(
   "/users/:userId/super-perc",

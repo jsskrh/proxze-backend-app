@@ -10,6 +10,7 @@ const {
   hideChars,
   getAverageRating,
   sortDataByDate,
+  createUserLocationData,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 const {
@@ -696,6 +697,27 @@ const getUsers = async (req, res) => {
   }
 };
 
+const getProxzesLocation = async (req, res) => {
+  try {
+    const users = await User.find({ userType: "proxze" });
+    console.log("users");
+    const locationData = createUserLocationData(users);
+    console.log("location");
+
+    return res.status(201).json({
+      status: true,
+      message: "Users' location data fetched successfully",
+      data: locationData,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get users' location data. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const getTasks = async (req, res) => {
   try {
     const {
@@ -1022,4 +1044,5 @@ module.exports = {
   unlinkSuper,
   removeProxze,
   getSystemLogs,
+  getProxzesLocation,
 };

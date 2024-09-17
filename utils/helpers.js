@@ -45,4 +45,56 @@ const sortDataByDate = (data) => {
   return data;
 };
 
-module.exports = { hideChars, getAverageRating, sortDataByDate };
+const escapeCommas = (value) => {
+  if (typeof value === "string" && value.includes(",")) {
+    return `"${value}"`;
+  }
+  return value;
+};
+
+const createUserLocationData = (users) => {
+  const csvHeader = [
+    "_id",
+    "oplAddress_label",
+    "oplAddress_placeId",
+    "oplAddress_lga",
+    "oplAddress_state",
+    "oplAddress_coordinates",
+    "resAddress_label",
+    "resAddress_placeId",
+    "resAddress_lga",
+    "resAddress_state",
+    "resAddress_coordinates",
+  ].join(",");
+  const csvRows = users.map((user) => {
+    const oplCoordinates =
+      user.oplAddress?.location?.coordinates?.join(";") || "";
+    const resCoordinates =
+      user.resAddress?.location?.coordinates?.join(";") || "";
+    return [
+      user._id || "",
+      escapeCommas(user.oplAddress?.label || ""),
+      user.oplAddress?.placeId || "",
+      user.oplAddress?.lga || "",
+      user.oplAddress?.state || "",
+      oplCoordinates,
+      escapeCommas(user.resAddress?.label || ""),
+      user.resAddress?.placeId || "",
+      user.resAddress?.lga || "",
+      user.resAddress?.state || "",
+      resCoordinates,
+    ].join(",");
+  });
+
+  const csvContent = [csvHeader, ...csvRows].join("\n");
+
+  return csvContent;
+};
+
+module.exports = {
+  hideChars,
+  getAverageRating,
+  sortDataByDate,
+  escapeCommas,
+  createUserLocationData,
+};
