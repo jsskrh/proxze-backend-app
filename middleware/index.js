@@ -12,6 +12,7 @@ function authToken(req, res, next) {
     !req.headers["x-access-token"] &&
     !req.headers["authorization"]
   ) {
+    
     return res.status(404).json({
       status: false,
       message: "User not authenticated",

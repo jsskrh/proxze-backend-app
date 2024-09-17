@@ -12,6 +12,16 @@ const SubscriptionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    paymentRef: {
+      type: String,
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: [0, "Amount must be a positive number"],
+    },
+
     duration: { type: String, enum: ["monthly", "annually"], required: true },
     expireAt: {
       type: Date,

@@ -60,7 +60,7 @@ const createUser = async (req, res) => {
       intendedProxy,
       subscription,
     } = req.body;
-    console.log(req.body);
+
     if (
       // !firstName ||
       // !lastName ||
@@ -142,7 +142,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    // await sendVerificationMail(result);
+    await sendVerificationMail(result, isProxzeBusiness);
     // await verifyNin(result);
 
     return res.status(201).json({
