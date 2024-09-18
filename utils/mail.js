@@ -2791,6 +2791,20 @@ const sendResetMail = async (user) => {
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${encodedToken}`;
 
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
     const msg = {
       to: email,
       from: process.env.MAIL_USER,
