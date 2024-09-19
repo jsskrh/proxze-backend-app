@@ -2756,11 +2756,11 @@ const sendVerificationText = async (user) => {
     const { data } = await axios.post(
       "https://v3.api.termii.com/api/sms/send",
       {
-        to: "2340" + user?.phoneNumber,
-        from: "Proxze",
-        sms: `Your verification code is ${user?.phoneToken}`,
+        to: "234" + user?.phoneNumber,
+        from: process.env.TERMII_SENDERID,
+        sms: `Your Proxze mobile verification code is ${user?.phoneToken}`,
         type: "plain",
-        channel: "generic",
+        channel: "dnd",
         api_key: process.env.TERMII_KEY,
       }
     );
