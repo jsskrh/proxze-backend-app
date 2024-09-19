@@ -18,7 +18,26 @@ const { sendPushNotification } = require("../utils/pushNotifications");
 const { Expo } = require("expo-server-sdk");
 const axios = require("axios");
 const mongoose = require("mongoose");
+const { createLog } = require("../utils/utilities");
 dotenv.config();
+
+const generateUniqueReferralToken = async () => {
+  let token;
+  let tokenExists = true;
+
+  const generateHexadecimal = () => {
+    return Math.floor(Math.random() * 0xffffffff)
+      .toString(16)
+      .padStart(8, "0");
+  };
+
+  while (tokenExists) {
+    token = generateHexadecimal();
+    tokenExists = await Task.exists({ referralToken: token });
+  }
+
+  return token;
+};
 
 const createTask = async (req, res) => {
   try {
@@ -43,6 +62,7 @@ const createTask = async (req, res) => {
 
     const principal = req.user.id;
     const user = await User.findById(req.user.id).populate({ path: "reviews" });
+    const referralToken = await generateUniqueReferralToken();
 
     const createResult = await taskCreator({
       type,
@@ -53,6 +73,7 @@ const createTask = async (req, res) => {
       endDate,
       principal,
       user,
+      referralToken,
     });
 
     // const newTask = await Task.create({
@@ -123,6 +144,15 @@ const createTask = async (req, res) => {
     // if (Expo.isExpoPushToken(expoPushToken)) {
     //   await sendPushNotification(expoPushToken, message);
     // }
+
+    await createLog({
+      action: "create",
+      userId: req.user.id,
+      entityId: createResult._id,
+      entityType: "task",
+      details: `${user._id} created a new ${createResult.type} task`,
+    });
+
     return res.status(201).json({
       status: true,
       message: "Task created successfully",
@@ -238,6 +268,36 @@ const updateLastViewed = async (req, res) => {
   }
 };
 
+const uploadVideo = async (req, res) => {
+  try {
+    const { videoUrl, name } = req.body;
+    const video = { url: videoUrl, name, timestamp: new Date() };
+    await Task.findOneAndUpdate(
+      {
+        _id: req.params.taskId,
+        "timeline.status": "started",
+      },
+      {
+        $push: {
+          videos: video,
+        },
+      },
+      { new: true }
+    );
+
+    return res.status(201).json({
+      status: true,
+      message: "Video uploaded successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+      error,
+    });
+  }
+};
+
 const approveRejectRequest = async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
@@ -267,7 +327,7 @@ const approveRejectRequest = async (req, res) => {
           title: "Task update",
           body:
             req.params.type === "approved"
-              ? `Your ${task.type} task has been approved`
+              ? `Your ${task.type} task was approved`
               : `Your ${task.type} task was rejected`,
           data: { screenName: "Task", params: { taskId: task._id } },
         });
@@ -297,6 +357,19 @@ const approveRejectRequest = async (req, res) => {
 
     await User.findByIdAndUpdate(task.principal._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    const details =
+      req.params.type === "approved"
+        ? `${task._id} was approved`
+        : `${task._id} was rejected`;
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details,
     });
 
     return res.status(201).json({
@@ -405,39 +478,79 @@ const getTaskpool = async (req, res) => {
       ],
     };
 
-    const tasks = await Task.find(taskQuery).populate({
-      path: "request",
-      match: {
-        $or: [{ network: { $in: ["internal", "both"] } }, { network: null }],
-      },
+    // const tasks = await Task.find(taskQuery).populate({
+    //   path: "request",
+    //   match: {
+    //     $or: [{ network: { $in: ["internal", "both"] } }, { network: null }],
+    //   },
+    // });
+
+    // const filteredTasks = tasks
+    //   .filter((task) => task.request !== null || task.request === undefined)
+    //   .filter((task) => {
+    //     if (task.type === "manyToOne") {
+    //       const taskLocation = task.location?.coordinates;
+    //       const userLocation = user.location?.coordinates;
+
+    //       if (taskLocation && userLocation) {
+    //         const distance = getDistanceFromLatLonInKm(
+    //           userLocation[0],
+    //           userLocation[1],
+    //           taskLocation[0],
+    //           taskLocation[1]
+    //         );
+
+    //         return distance <= 5;
+    //       }
+    //       return true;
+    //     }
+    //     return true;
+    //   })
+    //   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    let tasks;
+
+    if (user.userType === "proxze" && userLocation.coordinates) {
+      tasks = await Task.find({
+        // "timeline.status": "approved",
+        paymentStatus: false,
+        proxze: { $exists: false },
+        "location.geometry": {
+          $geoWithin: {
+            $centerSphere: [
+              [userLocation.coordinates[0], userLocation.coordinates[1]],
+              5 / 6371, // 5km radius in radians
+            ],
+          },
+        },
+      }).sort({
+        createdAt: -1,
+      });
+      console.log("test", tasks);
+    } else {
+      tasks = await Task.find({
+        paymentStatus: false,
+        proxze: { $exists: false },
+      }).sort({
+        createdAt: -1,
+      });
+    }
+
+    const mappedTasks = tasks.map((task) => {
+      return createTaskpoolObject(task);
     });
 
-    const filteredTasks = tasks
-      .filter((task) => task.request !== null || task.request === undefined)
-      .filter((task) => {
-        if (task.type === "manyToOne") {
-          const taskLocation = task.location?.coordinates;
-          const userLocation = user.location?.coordinates;
-
-          if (taskLocation && userLocation) {
-            const distance = getDistanceFromLatLonInKm(
-              userLocation[0],
-              userLocation[1],
-              taskLocation[0],
-              taskLocation[1]
-            );
-
-            return distance <= 5;
-          }
-          return true;
-        }
-        return true;
-      })
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.status(200).json({ tasks: filteredTasks });
+    return res.status(201).json({
+      status: true,
+      message: "Taskpool fetched",
+      data: tasks,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.log(error);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
   }
 };
 
@@ -676,6 +789,14 @@ const makeOffer = async (req, res) => {
       $push: { notifications: newNotification._id },
     });
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.user.id} expressed interest for task ${task._id}`,
+    });
+
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
@@ -775,6 +896,22 @@ const acceptTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.user.id} has been assigned to task ${task._id}`,
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was approved`,
     });
 
     await session.commitTransaction();
@@ -911,6 +1048,14 @@ const rejectOffer = async (req, res) => {
       });
     }
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${req.body.proxze}'s offer was rejected`,
+    });
+
     return res.status(201).json({
       status: true,
       message: `Proxze has been rejected`,
@@ -1021,6 +1166,14 @@ const startTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newProxzeNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was started`,
     });
 
     return res.status(201).json({
@@ -1157,6 +1310,14 @@ const completeTask = async (req, res) => {
       $push: { notifications: newNotification._id },
     });
 
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was completed`,
+    });
+
     return res.status(201).json({
       status: true,
       message: `Task has been completed`,
@@ -1240,6 +1401,14 @@ const confirmTask = async (req, res) => {
 
     await User.findByIdAndUpdate(task.proxze._id, {
       $push: { notifications: newNotification._id },
+    });
+
+    await createLog({
+      action: "update",
+      userId: req.user.id,
+      entityId: task._id,
+      entityType: "task",
+      details: `${task._id} was confirmed`,
     });
 
     return res.status(201).json({
@@ -1444,4 +1613,6 @@ module.exports = {
   getTaskHistory,
   handleLive,
   acceptTask,
+  uploadVideo,
+  generateUniqueReferralToken,
 };

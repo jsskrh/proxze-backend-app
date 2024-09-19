@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
       data: { type: mongoose.Schema.Types.ObjectId, ref: "Nin" },
       isVerified: {
         type: Boolean,
-        default: true,
+        default: false,
       },
     },
     password: {
@@ -45,6 +45,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       // required: true,
       // unique: true,
+    },
+    phoneToken: {
+      type: String,
+      required: true,
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
     },
     address: {
       street: {
@@ -175,6 +183,20 @@ const userSchema = new mongoose.Schema(
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    superApproved: { type: Boolean },
+    superRejected: { type: Boolean },
+    superPerc: {
+      type: Number,
+      min: 0,
+      max: 100,
+      validate: {
+        validator: function (v) {
+          return v >= 0 && v <= 100;
+        },
+        message: (props) =>
+          `${props.value} is not a valid percentage. It must be between 0 and 100.`,
+      },
+    },
     location: {
       type: {
         type: String,
@@ -206,3 +228,5 @@ userSchema.index({
 });
 const User = mongoose.model("User", userSchema);
 module.exports = User;
+// moxnYh-qiwta9-funfyd
+// bartef-dafxy0-tinNep

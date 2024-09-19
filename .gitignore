@@ -11,3 +11,8 @@ npm-debug.log*
 # local env files
 .env*.local
 .env
+
+.prettierignore
+genLocCsv.js
+output.csv
+users-loc.js

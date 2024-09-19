@@ -5,6 +5,6 @@ const Preview = require("../controllers/preview");
 
 const auth = require("../middleware/index");
 
-router.get("/:taskId", Preview.previewTask);
+router.get("/:token", Preview.previewTask);
 
 module.exports = router;

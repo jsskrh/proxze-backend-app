@@ -10,6 +10,7 @@ const {
   hideChars,
   getAverageRating,
   sortDataByDate,
+  createUserLocationData,
 } = require("../utils/helpers");
 const { sendPushNotification } = require("../utils/pushNotifications");
 const {
@@ -18,8 +19,32 @@ const {
 } = require("../utils/mail");
 const System = require("../models/system");
 const { verifyNin } = require("../utils/nin");
+const Log = require("../models/log");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+const updateSuperPerc = async (req, res) => {
+  const { superPerc } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { superPerc },
+      {
+        new: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).send({ error: "User not found" });
+    }
+
+    res.status(201).send(user);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send({ error: "Server error" });
+  }
+};
 
 const verifyEmail = async (req, res) => {
   const { token } = req.params;
@@ -320,11 +345,7 @@ const getUser = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId);
 
-    return res.status(201).json({
-      status: true,
-      message: "User fetched successfully",
-      data: user,
-    });
+    return res.status(201).json(user);
   } catch (error) {
     res.status(500).send(error);
   }
@@ -498,7 +519,7 @@ const updateLocation = async (req, res) => {
 
 const deactivateAccount = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user.id, { isDeactivated: true });
+    await User.findByIdAndUpdate(req.params.userId, { isDeactivated: true });
 
     return res.status(201).json({
       status: true,
@@ -515,7 +536,7 @@ const deactivateAccount = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.user.id);
+    await User.findByIdAndDelete(req.params.userId);
 
     return res.status(201).json({
       status: true,
@@ -525,6 +546,47 @@ const deleteAccount = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: `Unable to delete account. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const makeAdmin = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.userId, { userType: "admin" });
+
+    return res.status(201).json({
+      status: true,
+      message: "User type successfully updated",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: `Unable to change user's user type. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const unlinkSuper = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.userId, {
+      $unset: {
+        superProxze: "",
+        superApproved: "",
+        superRejected: "",
+        superPerc: "",
+      },
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Super proxze removed successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: `Unable to remove super proxze. Please try again.`,
       error: err,
     });
   }
@@ -635,6 +697,27 @@ const getUsers = async (req, res) => {
   }
 };
 
+const getProxzesLocation = async (req, res) => {
+  try {
+    const users = await User.find({ userType: "proxze" });
+    console.log("users");
+    const locationData = createUserLocationData(users);
+    console.log("location");
+
+    return res.status(201).json({
+      status: true,
+      message: "Users' location data fetched successfully",
+      data: locationData,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get users' location data. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const getTasks = async (req, res) => {
   try {
     const {
@@ -701,6 +784,34 @@ const getTasks = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: `Unable to get tasks. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const removeProxze = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    await Task.findByIdAndUpdate(
+      taskId,
+      {
+        $unset: { proxze: "" },
+        status: "created",
+        "offers.$[].isRejected": true, // Set all offers to rejected
+        timeline: [{ status: "created", timestamp: new Date() }], // Reset timeline status to 'created'
+      },
+      { new: true }
+    );
+
+    return res.status(201).json({
+      status: true,
+      message: "Proxze romoved",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get remove proxze. Please try again.`,
       error: err,
     });
   }
@@ -844,6 +955,71 @@ const deleteUnverifiedNinUsers = async (req, res) => {
   }
 };
 
+const getSystemLogs = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      search,
+      type,
+      purpose,
+      sortBy,
+      orderBy,
+      startDate,
+      endDate,
+    } = req.query;
+    const perPage = 15;
+    let query = {};
+    let sortQuery = {};
+
+    query = {
+      $and: [
+        {
+          $or: [
+            { summary: { $regex: search, $options: "i" } },
+            { transactionSummary: { $regex: search, $options: "i" } },
+            { reference: { $regex: search, $options: "i" } },
+          ],
+        },
+      ],
+    };
+
+    // if (type !== undefined && type !== "")
+    //   query.$and.push({ transactionType: type });
+    // if (purpose !== undefined && purpose !== "") query.$and.push({ purpose });
+    // // if (state !== undefined && state !== "")
+    // //   query.$and.push({ "location.state": state });
+    // // if (lga !== undefined && lga !== "")
+    // //   query.$and.push({ "location.lga": lga });
+    // if (startDate !== undefined && startDate !== "")
+    //   query.$and.push({ createdAt: { $gte: new Date(startDate) } });
+    // if (endDate !== undefined && endDate !== "")
+    //   query.$and.push({ createdAt: { $lte: new Date(endDate) } });
+    // if (sortBy !== undefined && sortBy !== "")
+    //   sortQuery[sortBy] = orderBy === "descending" ? 1 : -1;
+
+    const logCount = await Log.countDocuments();
+    const logs = await Log.find().sort({
+      createdAt: -1,
+    });
+
+    // const count = await Transaction.countDocuments(query);
+    // const hasNextPage = page * perPage < count;
+
+    return res.status(201).json({
+      data: logs,
+      // count,
+      // transactions,
+      // hasNextPage,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to get system logs. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 module.exports = {
   verifyEmail,
   sendVerificationToken,
@@ -863,4 +1039,10 @@ module.exports = {
   bulkEmailVerification,
   bulkNinVerification,
   deleteUnverifiedNinUsers,
+  updateSuperPerc,
+  makeAdmin,
+  unlinkSuper,
+  removeProxze,
+  getSystemLogs,
+  getProxzesLocation,
 };

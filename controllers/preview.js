@@ -18,10 +18,10 @@ const mongoose = require("mongoose");
 dotenv.config();
 
 const previewTask = async (req, res) => {
-  const { taskId } = req.params;
+  const { token } = req.params;
 
   try {
-    const task = await Task.findById(taskId)
+    const task = await Task.findOne({ referralToken: token })
       .populate("principal")
       .populate("proxze")
       .populate({

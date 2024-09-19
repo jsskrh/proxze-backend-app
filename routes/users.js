@@ -10,6 +10,12 @@ router.patch("/register/sub/:token", Users.subProxzeRegistration);
 router.get("/verify-email/:token", Users.verifyEmail);
 router.post("/resend-token", Users.resendToken);
 router.post("/send-token", Users.sendVerificationToken);
+router.post(
+  "/send-phone-token",
+  auth.authToken,
+  Users.sendPhoneVerificationToken
+);
+router.patch("/verify-phone-token", auth.authToken, Users.verifyPhone);
 router.get("/test-send-token", Users.testRoute);
 router.post("/login", Users.loginUser);
 router.post("/forgot-password", Users.forgotPassword);
@@ -23,7 +29,7 @@ router.put("/settings/user-info", auth.authToken, Users.updateUserInfo);
 router.put(
   "/settings/payment-info",
   auth.authToken,
-  auth.passwordCheck,
+  // auth.passwordCheck,
   Users.updatePaymentInfo
 );
 router.put(

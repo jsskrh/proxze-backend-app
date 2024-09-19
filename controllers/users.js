@@ -19,11 +19,13 @@ const {
   sendVerificationMail,
   sendResetMail,
   sendReregisterMail,
+  sendVerificationText,
 } = require("../utils/mail");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
 const { verifyNin } = require("../utils/nin");
 const { verificationSeeder } = require("../utils/seed/verification");
+const { createLog } = require("../utils/utilities");
 dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -34,6 +36,20 @@ const generateUniqueReferralToken = async () => {
   while (tokenExists) {
     token = uuidv4();
     tokenExists = await User.exists({ referralToken: token });
+  }
+
+  return token;
+};
+
+const generateUniquePhoneToken = async () => {
+  let token;
+  let tokenExists = true;
+
+  while (tokenExists) {
+    token = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, "0");
+    tokenExists = await User.exists({ phoneToken: token });
   }
 
   return token;
@@ -67,8 +83,8 @@ const createUser = async (req, res) => {
       !email ||
       !password ||
       !phoneNumber ||
-      // !nin ||
-      !userType
+      !userType ||
+      (userType === "proxze" && !nin)
     ) {
       return res.status(400).json({
         status: false,
@@ -111,6 +127,7 @@ const createUser = async (req, res) => {
           ? "admin"
           : userType,
       password: hashedPassword,
+      phoneToken: await generateUniquePhoneToken(),
     };
 
     if (isProxzeBusiness) {
@@ -128,6 +145,7 @@ const createUser = async (req, res) => {
       newUser.agency = agency;
       newUser.serviceOffered = serviceOffered;
       newUser.noOfProxzes = noOfProxzes;
+      newUser.superPerc = 15;
     }
 
     if (superProxzeId && userType === "proxze") {
@@ -144,6 +162,14 @@ const createUser = async (req, res) => {
 
     await sendVerificationMail(result, isProxzeBusiness);
     // await verifyNin(result);
+
+    await createLog({
+      action: "create",
+      userId: result._id,
+      entityId: result._id,
+      entityType: "user",
+      details: `${result._id} created a ${result.userType} account`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -199,6 +225,14 @@ const subProxzeRegistration = async (req, res) => {
 
     await verifyNin(user);
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} registered their account`,
+    });
+
     return res.status(201).json({
       status: true,
       message: "Registration completed successfully",
@@ -228,6 +262,14 @@ const verifyEmail = async (req, res) => {
     const email = decoded.email;
 
     const user = await User.findOneAndUpdate({ email }, { isVerified: true });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} verified their account`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -311,6 +353,57 @@ const sendVerificationToken = async (req, res) => {
   }
 };
 
+const sendPhoneVerificationToken = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const token = await generateUniquePhoneToken();
+    user.phoneToken = token;
+    user.save();
+    await sendVerificationText(user);
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification text sent successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to send verification text to user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
+const verifyPhone = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user.id,
+      phoneToken: req.query.otp,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        status: true,
+        message: `Invalid verification token.`,
+      });
+    } else {
+      user.phoneVerified = true;
+      user.save();
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Verification successful",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: true,
+      message: `Unable to verify user. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const testRoute = async (req, res) => {
   try {
     await sendReregisterMail();
@@ -343,6 +436,14 @@ const forgotPassword = async (req, res) => {
 
     try {
       await sendResetMail(user);
+
+      await createLog({
+        action: "other",
+        userId: user._id,
+        entityId: user._id,
+        entityType: "user",
+        details: `A password reset token was sent to ${user._id}`,
+      });
     } catch (err) {
       return res.status(500).json({
         status: false,
@@ -394,6 +495,14 @@ const resetPassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} changed their password`,
+    });
+
     return res.status(200).json({
       status: true,
       message: "Password reset successful",
@@ -438,6 +547,13 @@ const loginUser = async (req, res) => {
     });
   }
 
+  // if (user.superProxze && !user.superApproved) {
+  //   return res.status(401).json({
+  //     status: false,
+  //     message: "Account has not been approved by super proxy.",
+  //   });
+  // }
+
   try {
     if (await bcrypt.compare(req.body.password, user.password)) {
       const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
@@ -481,6 +597,14 @@ const loginUser = async (req, res) => {
         "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
       );
 
+      await createLog({
+        action: "auth",
+        userId: user._id,
+        entityId: user._id,
+        entityType: "user",
+        details: `${user._id} logged in`,
+      });
+
       res.status(200).send(userData);
     } else {
       return res.status(401).json({
@@ -500,38 +624,8 @@ const loginUser = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    // const userData = {
-    //   id: user._id,
-    //   firstName: user.firstName,
-    //   lastName: user.lastName,
-    //   email: user.email,
-    //   userType: user.userType,
-    //   bio: user.bio,
-    //   phoneNumber: user.phoneNumber,
-    //   address: user.address,
-    //   state: user.state,
-    //   country: user.country,
-    //   lga: user.lga,
-    //   balance: user.balance,
-    //   avatar: user.avatar,
-    //   nin: user.nin,
-    //   isVerified: user.isVerified,
-    //   ninVerified: user.ninVerified,
-    //   createdAt: user.createdAt,
-    //   updatedAt: user.updatedAt,
-    //   paymentInfo: {
-    //     bank: user.paymentInfo?.bank,
-    //     accountName: user.paymentInfo?.accountName,
-    //     bankCode: user.paymentInfo?.bankCode,
-    //     accountNumber:
-    //       user.paymentInfo?.accountNumber &&
-    //       hideChars(user.paymentInfo?.accountNumber),
-    //   },
-    //   rating: getAverageRating(user.reviews),
-    //   postalCode: user.postalCode,
-    // };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email agency serviceOffered areaOfOperation intendedProxy userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken"
+      "_id firstName lastName email agency serviceOffered areaOfOperation intendedProxy userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken phoneVerified"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -616,6 +710,15 @@ const updateUserInfo = async (req, res) => {
     const userDto = await User.findById(user._id).select(
       "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their account`,
+    });
+
     res.status(201).send(userDto);
   } catch (error) {
     console.error(error.message);
@@ -641,6 +744,10 @@ const updateBasicInfo = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
+    if (avatar) {
+      user.avatar = avatar;
+    }
+
     if (firstName) {
       user.firstName = firstName;
     }
@@ -660,6 +767,7 @@ const updateBasicInfo = async (req, res) => {
 
     if (phoneNumber) {
       user.phoneNumber = phoneNumber;
+      user.phoneVerified = false;
     }
 
     if (avatar) {
@@ -681,39 +789,17 @@ const updateBasicInfo = async (req, res) => {
 
     await user.save();
 
-    const userData = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      userType: user.userType,
-      bio: user.bio,
-      phoneNumber: user.phoneNumber,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-      lga: user.lga,
-      balance: user.balance,
-      avatar: user.avatar,
-      nin: user.nin,
-      isVerified: user.isVerified,
-      ninVerified: user.ninVerified,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      paymentInfo: {
-        bank: user.paymentInfo?.bank,
-        accountName: user.paymentInfo?.accountName,
-        bankCode: user.paymentInfo?.bankCode,
-        accountNumber:
-          user.paymentInfo?.accountNumber &&
-          hideChars(user.paymentInfo?.accountNumber),
-      },
-      rating: getAverageRating(user.reviews),
-      postalCode: user.postalCode,
-    };
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
+      "_id avatar firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their basic info`,
+    });
 
     res.status(200).send(userDto);
   } catch (error) {
@@ -763,6 +849,14 @@ const updateAddress = async (req, res) => {
       "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
 
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their address`,
+    });
+
     res.status(200).send(userDto);
   } catch (error) {
     console.error(error);
@@ -774,32 +868,39 @@ const updateAddress = async (req, res) => {
 };
 
 const updatePaymentInfo = async (req, res) => {
-  const { oldAccountNumber, accountNumber, bank, bankCode, accountName } =
-    req.body;
+  const { accountNumber, bank, bankCode, accountName } = req.body;
 
   try {
-    const user = await User.findById(req.user.id);
-    if (
-      user.paymentInfo.accountNumber &&
-      oldAccountNumber !== user.paymentInfo.accountNumber
-    ) {
-      return res.status(401).json({
-        status: false,
-        message: "Incorrect old account number.",
-      });
-    }
+    // const user = await User.findById(req.user.id);
+    // if (
+    //   user.paymentInfo.accountNumber &&
+    //   oldAccountNumber !== user.paymentInfo.accountNumber
+    // ) {
+    //   return res.status(401).json({
+    //     status: false,
+    //     message: "Incorrect old account number.",
+    //   });
+    // }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       req.user.id,
       { paymentInfo: { accountNumber, bank, bankCode, accountName } },
       { new: true }
     );
 
     const userData = {
-      bank: updatedUser.paymentInfo.bank,
-      accountNumber: hideChars(updatedUser.paymentInfo.accountNumber),
+      bank: user.paymentInfo.bank,
+      accountNumber: hideChars(user.paymentInfo.accountNumber),
     };
-    console.log(userData);
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their payment info`,
+    });
+
     res.status(200).send(userData);
   } catch (err) {
     console.error(err);
@@ -818,7 +919,17 @@ const updatePassword = async (req, res) => {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await User.findByIdAndUpdate(req.user.id, { password: hashedPassword });
+    const user = await User.findByIdAndUpdate(req.user.id, {
+      password: hashedPassword,
+    });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} updated their password`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -857,6 +968,14 @@ const updateLocation = async (req, res) => {
 const deactivateAccount = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, { isDeactivated: true });
+
+    await createLog({
+      action: "update",
+      userId: user._id,
+      entityId: user._id,
+      entityType: "user",
+      details: `${user._id} deactivated their account`,
+    });
 
     return res.status(201).json({
       status: true,
@@ -1114,6 +1233,7 @@ const getDashboard = async (req, res) => {
 
 module.exports = {
   generateUniqueReferralToken,
+  generateUniquePhoneToken,
   createUser,
   verifyEmail,
   sendVerificationToken,
@@ -1132,4 +1252,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   subProxzeRegistration,
+  sendPhoneVerificationToken,
+  verifyPhone,
 };

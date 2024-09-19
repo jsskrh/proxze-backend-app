@@ -7,7 +7,19 @@ const Admin = require("../controllers/admin");
 const auth = require("../middleware/index");
 
 router.get("/users", auth.authToken, auth.isAdmin, Admin.getUsers);
+router.get(
+  "/users-location",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.getProxzesLocation
+);
 router.get("/users/:userId", auth.authToken, auth.isSuperProxze, Admin.getUser);
+router.patch(
+  "/users/:userId/super-perc",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.updateSuperPerc
+);
 router.patch(
   "/users/:userId/deactivate",
   auth.authToken,
@@ -20,7 +32,25 @@ router.delete(
   auth.isAdmin,
   Admin.deleteAccount
 );
+router.patch(
+  "/users/:userId/user-type",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.makeAdmin
+);
+router.patch(
+  "/users/:userId/remove-super",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.unlinkSuper
+);
 router.get("/tasks", auth.authToken, auth.isAdmin, Admin.getTasks);
+router.patch(
+  "/tasks/:taskId/remove-proxze",
+  auth.authToken,
+  auth.isAdmin,
+  Admin.removeProxze
+);
 router.get(
   "/transactions",
   auth.authToken,
@@ -46,5 +76,6 @@ router.patch(
   auth.isAdmin,
   Admin.bulkNinVerification
 );
+router.get("/system/logs", auth.authToken, auth.isAdmin, Admin.getSystemLogs);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const User = require("../models/user");
 const Transaction = require("../models/transaction");
 const { creditAccount, debitAccount } = require("../utils/transactions");
 const { sortDataByDate } = require("../utils/helpers");
+const System = require("../models/system");
 
 const getTransactions = async (req, res) => {
   try {
@@ -35,8 +36,8 @@ const transfer = async (req, res) => {
     const { timestamp } = req.body;
     const { taskId } = req.params;
     const task = await Task.findById(taskId);
-    const billingAlgorithm = await BillingAlgorithm.findOne();
-    const paymentRatio = billingAlgorithm.paymentPercentage / 100;
+    const system = await System.findOne();
+    const paymentRatio = system.paymentPercentage / 100;
     const beneficiary = task.proxze;
     // const principalId = task.principal;
 
@@ -107,6 +108,8 @@ const transfer = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
+
+    console.error("Transfer Error:", err);
 
     return res.status(500).json({
       status: false,

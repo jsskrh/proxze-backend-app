@@ -25,6 +25,7 @@ const taskCreator = async ({
   group,
   isProxzeBusiness,
   request,
+  referralToken,
 }) => {
   const newTask = await Task.create({
     type,
@@ -51,6 +52,7 @@ const taskCreator = async ({
     endDate,
     principal,
     organization,
+    referralToken,
     rating: getAverageRating(user.reviews),
     timeline: [{ status: "created", timestamp: Date.now() }],
     tier: tier ?? "basic",

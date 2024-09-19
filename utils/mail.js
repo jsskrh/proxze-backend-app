@@ -8,6 +8,7 @@ var AWS = require("aws-sdk");
 AWS.config.update({ region: process.env.AWS_BUCKET_REGION });
 const { renderFile } = require("ejs");
 const { join } = require("path");
+const { default: axios } = require("axios");
 
 const createResetMail = ({ firstName, encodedToken, email, resetUrl }) => {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http:/= /www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -2746,14 +2747,37 @@ const sendVerificationMail = async (user, isProxzeBusiness) => {
     });
     // }
   } catch (error) {
-    console.log(err);
+    console.log(error);
+    throw new Error(error);
+    return;
+  }
+};
+
+const sendVerificationText = async (user) => {
+  try {
+    const { data } = await axios.post(
+      "https://v3.api.termii.com/api/sms/send",
+      {
+        to: "234" + user?.phoneNumber,
+        from: process.env.TERMII_SENDERID,
+        sms: `Your Proxze mobile verification code is ${user?.phoneToken}`,
+        type: "plain",
+        channel: "dnd",
+        api_key: process.env.TERMII_KEY,
+      }
+    );
+    console.log(data);
+    return;
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
     return;
   }
 };
 
 const sendResetMail = async (user) => {
   try {
-    const { firstName, email, _id, userType } = user;
+    const { firstName, email, _id, userType, agency } = user;
 
     const resetToken = jwt.sign(
       { userId: _id },
@@ -2767,41 +2791,49 @@ const sendResetMail = async (user) => {
 
     const encodedToken = base64UrlEncode(resetToken);
 
-    const baseUrl = ["principal", "sub-principal"].includes(userType)
+    const baseUrl = agency
       ? process.env.PROXZE_BUSINESS_URL
       : process.env.CLIENT_URL;
 
     const resetUrl = `${baseUrl}/reset-password/${encodedToken}`;
-  
-    var params = {
-      Destination: {
-        ToAddresses: [email],
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
       },
-      Message: {
-        Body: {
-          Html: {
-            Charset: "UTF-8",
-            Data: createResetMail({
-              firstName,
-              email,
-              encodedToken,
-              resetUrl,
-            }),
-          },
-          Text: {
-            Charset: "UTF-8",
-            Data: `Hi ${firstName}, You have requested to reset your password. Please click on the link below to reset your password: ${resetUrl}`,
-          },
-        },
-        Subject: {
-          Charset: "UTF-8",
-          Data: "Reset password",
-        },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
       },
-      Source: process.env.MAIL_USER,
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Reset password",
+      text: `Hi ${firstName}, You have requested to reset your password. Please click on the link below to reset your password: ${resetUrl}`,
+      html: createResetMail({
+        firstName,
+        email,
+        encodedToken,
+        resetUrl,
+      }),
     };
 
-    await sendMail(params);
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+          console.error(err);
+        }
+        console.log("email sent");
+        resolve("Email sent");
+      });
+    });
   } catch (err) {
     console.log(err);
     return err;
@@ -3019,4 +3051,5 @@ module.exports = {
   sendResetMail,
   sendReregisterMail,
   sendGroupRegistrationMail,
+  sendVerificationText,
 };

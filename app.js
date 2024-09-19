@@ -33,6 +33,7 @@ const archiveRoutes = require("./routes/business/archive");
 const permissionRoutes = require("./routes/business/permission");
 const subscriptionRoutes = require("./routes/business/subscription");
 const { assignSuperTokens } = require("./utils/seed/superToken");
+const { assignPhoneTokens } = require("./utils/seed/phoneToken");
 
 const app = express();
 
@@ -59,55 +60,11 @@ mongoose
     // tlsCAFile: tlsCAFilePath,
   })
   .then(() => {
-    async function sendSms(data) {
-      try {
-        // Create form data
-        const form = new FormData();
-        form.append("token_id", data.token_id);
-        form.append("extension_number", data.extension_number);
-        form.append("sms_number", data.sms_number);
-        form.append("to", data.to);
-
-        if (data.body) {
-          form.append("body", data.body);
-        }
-
-        // Make POST request
-        const response = await axios.post(
-          "https://web.vezeti.net/hodupbx_api/v1.4/sendSms",
-          form
-          // {
-          //   headers: {
-          //     "Content-Type": "application/json",
-          //     "Content-Length": Buffer.byteLength(JSON.stringify(data), "utf8"),
-          //   },
-          // }
-        );
-
-        console.log("Response:", response.data);
-      } catch (error) {
-        console.error(
-          "Error:",
-          // error
-          error.response ? error.response.data : error.message
-        );
-      }
-    }
-
-    const smsData1 = {
-      token_id: "hdglMafWsWYvjegd",
-      extension_number: "101",
-      sms_number: "2342018870030",
-      to: "2348038653466",
-      body: "HI",
-    };
-
-    sendSms(smsData1);
-
     console.log("Successfully connected to Database.");
     // if (process.env.ENVIRONMENT === "prod") verificationSeeder();
     configSeeder();
     assignSuperTokens();
+    assignPhoneTokens();
   })
   .catch((err) => {
     console.error("Unable to connect to Database.", err);
