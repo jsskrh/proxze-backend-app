@@ -439,6 +439,7 @@ const getTaskpool = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("group");
     const userGroupId = user.group ? user.group._id : null;
+    const userLocation = user.location;
 
     let taskQuery = {
       $or: [
@@ -526,7 +527,6 @@ const getTaskpool = async (req, res) => {
       }).sort({
         createdAt: -1,
       });
-      console.log("test", tasks);
     } else {
       tasks = await Task.find({
         paymentStatus: false,
