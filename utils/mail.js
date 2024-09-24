@@ -2673,7 +2673,7 @@ const sendVerificationMail = async (user, isProxzeBusiness) => {
     };
 
     const encodedToken = base64UrlEncode(verificationToken);
-
+    console.log(encodedToken);
     // if (process.env.ENVIRONMENT !== "stage") {
     //   // Create sendEmail params
     //   var params = {
@@ -2719,7 +2719,6 @@ const sendVerificationMail = async (user, isProxzeBusiness) => {
         rejectUnauthorized: false,
       },
     });
-
     const msg = {
       to: email,
       from: process.env.MAIL_USER,
