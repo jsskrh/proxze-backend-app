@@ -25,6 +25,7 @@ const taskCreator = async ({
   group,
   isProxzeBusiness,
   request,
+  address,
   referralToken,
 }) => {
   const newTask = await Task.create({
@@ -59,6 +60,7 @@ const taskCreator = async ({
     group,
     isProxzeBusiness,
     request,
+    address
   });
 
   // const usersWithinRadius = await User.find({

@@ -143,11 +143,15 @@ const taskSchema = new mongoose.Schema(
       },
     ],
     lastViewed: { type: Date, trim: true },
-    referralToken: { type: String, required: true },
+    referralToken: {
+      type: String,
+      // required: true
+    },
 
     // ----- PROXZE BUSINESS -----
     isProxzeBusiness: { type: Boolean, default: false },
     title: { type: String },
+    address: { type: String },
     businessStatus: {
       type: String,
       enum: ["rejected", "created", "inProgress", "completed"],

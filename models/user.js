@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
     },
     phoneToken: {
       type: String,
-      required: true,
+      // required: true,
     },
     phoneVerified: {
       type: Boolean,

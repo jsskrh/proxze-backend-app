@@ -1,5 +1,6 @@
 const Request = require("../../models/business/request");
 const User = require("../../models/user");
+const Task = require("../../models/task");
 const { taskCreator } = require("../../utils/tasks");
 const getLatLng = require("../../utils/location");
 
@@ -47,9 +48,10 @@ exports.createRequest = async (req, res) => {
         description: task.description,
         principal: principalId,
         group: groupId,
-        request:savedrequest._id,
+        request: savedrequest._id,
         startDate: task.startDate,
         endDate: task.endDate,
+        address: task.address,
         location: {
           coords: {
             lat,
@@ -62,7 +64,6 @@ exports.createRequest = async (req, res) => {
       await taskCreator(singleTask);
     }
 
-   
     res.status(201).json(request);
   } catch (error) {
     console.error(error);
@@ -94,6 +95,15 @@ exports.getRequestById = async (req, res) => {
   try {
     const request = await Request.findById(req.params.id);
     res.json(request);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getTasksByRequestId = async (req, res) => {
+  try {
+    const tasks = await Task.find({ request: req.params.id });
+    return res.json(tasks);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
