@@ -36,7 +36,7 @@ const taskCreator = async ({
     // lga,
     // address,
     location: {
-      label: location.label || "proxzeBusiness",
+      label: location.label || address,
       geometry: {
         type: "Point",
         coordinates: [location.coords.lng, location.coords.lat],
@@ -60,7 +60,7 @@ const taskCreator = async ({
     group,
     isProxzeBusiness,
     request,
-    address
+    address,
   });
 
   // const usersWithinRadius = await User.find({
