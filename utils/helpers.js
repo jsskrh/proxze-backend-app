@@ -72,6 +72,8 @@ const escapeCommas = (value) => {
 const createUserLocationData = (users) => {
   const csvHeader = [
     "_id",
+    "name",
+    "registeredAt",
     "oplAddress_label",
     "oplAddress_placeId",
     "oplAddress_lga",
@@ -90,6 +92,8 @@ const createUserLocationData = (users) => {
       user.resAddress?.location?.coordinates?.join(";") || "";
     return [
       user._id || "",
+      `${user?.firstName} ${user?.lastName}` || "",
+      user.createdAt || "",
       escapeCommas(user.oplAddress?.label || ""),
       user.oplAddress?.placeId || "",
       user.oplAddress?.lga || "",
