@@ -19,8 +19,8 @@ io.on("connection", (socket) => {
   console.log("connected");
 
   socket.on("setup", (userData) => {
-    console.log(userData.id);
-    socket.join(userData.id);
+    console.log(userData?._id);
+    socket.join(userData?._id);
     socket.emit("connected");
   });
 
@@ -50,6 +50,6 @@ io.on("connection", (socket) => {
 
   socket.off("setup", () => {
     console.log("User disconnnected");
-    socket.leave(userData.id);
+    socket.leave(userData?._id);
   });
 });

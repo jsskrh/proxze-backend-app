@@ -2838,6 +2838,52 @@ const generateTemplate = async ({ name, data = {} }) => {
   return renderFile(join(templates, `${name}.ejs`), data);
 };
 
+const sendBroadcastMail = async ({ body, subject, user }) => {
+  try {
+    // Create sendEmail params
+    const htmlData = await generateTemplate({
+      name: "broadcast",
+      data: { body, subject, name: user.firstName ?? "User" },
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: user.email,
+      from: process.env.MAIL_USER,
+      subject,
+      text: `Dear ${user.firstName ?? "User"}, ${body}`,
+      html: htmlData,
+    };
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+          console.error(err);
+        }
+        console.log("email sent");
+        resolve("Email sent");
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    return err;
+  }
+};
+
 const sendReregisterMail = async () => {
   try {
     // Create sendEmail params
@@ -2988,4 +3034,5 @@ module.exports = {
   sendResetMail,
   sendReregisterMail,
   sendVerificationText,
+  sendBroadcastMail,
 };
