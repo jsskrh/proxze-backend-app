@@ -16,6 +16,7 @@ const { sendPushNotification } = require("../utils/pushNotifications");
 const {
   createVerificationMail,
   sendVerificationMail,
+  sendBroadcastMail,
 } = require("../utils/mail");
 const System = require("../models/system");
 const { verifyNin } = require("../utils/nin");
@@ -697,6 +698,31 @@ const getUsers = async (req, res) => {
   }
 };
 
+const broadcastMessage = async (req, res) => {
+  try {
+    const { channel, all, body, subject } = req.body;
+
+    if (channel.includes("email") && all) {
+      const users = await User.find();
+
+      for (let user in users) {
+        await sendBroadcastMail({ body, subject, user: users[user] });
+      }
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "Message was broadcasted successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: `Unable to broadcast message. Please try again.`,
+      error: err,
+    });
+  }
+};
+
 const getProxzesLocation = async (req, res) => {
   try {
     const users = await User.find({ userType: "proxze" });
@@ -1045,4 +1071,5 @@ module.exports = {
   removeProxze,
   getSystemLogs,
   getProxzesLocation,
+  broadcastMessage,
 };
