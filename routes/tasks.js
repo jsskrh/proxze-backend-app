@@ -10,7 +10,7 @@ router.get("/view/:taskId", auth.authToken, Tasks.getTask);
 router.get("/pending", auth.authToken, auth.isAdmin, Tasks.getPendingRequests);
 router.get("/ongoing", auth.authToken, Tasks.getOngoingTasks);
 router.get("/history", auth.authToken, Tasks.getTaskHistory);
-router.put(
+router.get(
   "/view/:taskId/principal/last-viewed",
   auth.authToken,
   auth.isPrincipal,
