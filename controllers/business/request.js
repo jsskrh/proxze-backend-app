@@ -1,4 +1,8 @@
 const Request = require("../../models/business/request");
+const User = require("../../models/user");
+const Task = require("../../models/task");
+const { taskCreator } = require("../../utils/tasks");
+const getLatLng = require("../../utils/location");
 
 exports.createRequest = async (req, res) => {
   const {
@@ -11,8 +15,17 @@ exports.createRequest = async (req, res) => {
     description,
     principalId,
     groupId,
+    title,
+    class: className,
+    schedule,
+    tasks,
+    startDate,
+    endDate,
   } = req.body;
   try {
+    const principal = await User.findById(principalId).populate({
+      path: "reviews",
+    });
     const request = new Request({
       type,
       network,
@@ -23,10 +36,64 @@ exports.createRequest = async (req, res) => {
       description,
       principalId,
       groupId,
+      title,
+      class: className,
+      schedule,
     });
-    await request.save();
+
+    const savedrequest = await request.save();
+
+    if (tasks) {
+      for (const task of JSON.parse(tasks)) {
+        const { lat, lng } = await getLatLng(task.address);
+        singleTask = {
+          type: type,
+          description: task.description,
+          principal: principalId,
+          group: groupId,
+          request: savedrequest._id,
+          startDate: task.startDate,
+          endDate: task.endDate,
+          address: task.address,
+          location: {
+            coords: {
+              lat,
+              lng,
+            },
+          },
+          isProxzeBusiness: true,
+          user: principal,
+        };
+        await taskCreator(singleTask);
+      }
+    } else {
+      const { lat, lng } = await getLatLng(tag);
+      const task = {
+        type: type,
+        description: description,
+        principal: principalId,
+        group: groupId,
+        request: savedrequest._id,
+        tag,
+        address: tag,
+        location: {
+          coords: {
+            lat,
+            lng,
+          },
+        },
+        startDate,
+        endDate,
+        isProxzeBusiness: true,
+        user: principal,
+      };
+
+      await taskCreator(task);
+    }
+
     res.status(201).json(request);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -60,12 +127,50 @@ exports.getRequestById = async (req, res) => {
   }
 };
 
+exports.getTasksByRequestId = async (req, res) => {
+  try {
+    const tasks = await Task.find({ request: req.params.id });
+    return res.json(tasks);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 exports.getAllRequestsByPrincipalId = async (req, res) => {
   try {
-    const requests = await Request.find({
-      principalId: req.params.principalId,
+    const { principalId } = req.params;
+    const { page = 1, perPage = 15, search = "", sort = "desc" } = req.query;
+
+    const query = {
+      principalId,
+      title: { $regex: search, $options: "i" },
+    };
+
+    const totalCount = await Request.countDocuments(query);
+
+    const requests = await Request.find(query)
+      .populate({
+        path: "groupId",
+        select: "name",
+      })
+      .sort({ createdAt: sort === "asc" ? 1 : -1 })
+      .skip((page - 1) * perPage)
+      .limit(parseInt(perPage));
+
+    const formattedRequests = requests.map((request) => {
+      const { groupId, ...rest } = request.toObject();
+      return {
+        ...rest,
+        groupName: groupId?.name || null,
+      };
     });
-    res.json(requests);
+
+    res.json({
+      requests: formattedRequests,
+      count: totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / perPage),
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -1748,7 +1748,7 @@ const createVerificationMail = ({
                     <tr>
                       <td align="center" class="shell">
                         <a
-                          href="${process.env.CLIENT_URL}"
+                          href="${liveUrl}"
                           class="disabled-plaintext"
                           data-testid="logo"
                           style="color: inherit"
@@ -1936,7 +1936,7 @@ const createVerificationMail = ({
                                       >
                                         <a
                                           class="h5"
-                                          href="${process.env.CLIENT_URL}/verify-email/${encodedToken}"
+                                          href="${liveUrl}/verify-email/${encodedToken}"
                                           style="
                                             font-family: ProxzeSans-Bold, Helvetica,
                                               Roboto, Segoe UI, sans-serif;
@@ -2006,9 +2006,9 @@ const createVerificationMail = ({
                                 If that doesn&#x27;t work, copy and paste the
                                 following link in your browser:<br />
                                 <a
-                                  href="${process.env.CLIENT_URL}/verify-email/${encodedToken}"
+                                  href="${liveUrl}/verify-email/${encodedToken}"
                                   style="color: inherit; text-decoration: underline"
-                                  >${process.env.CLIENT_URL}/verify-email/${encodedToken}</a
+                                  >${liveUrl}/verify-email/${encodedToken}</a
                                 >
                               </td>
                             </tr>
@@ -2659,7 +2659,7 @@ const sendMail = async (params) => {
   );
 };
 
-const sendVerificationMail = async (user) => {
+const sendVerificationMail = async (user, isProxzeBusiness) => {
   try {
     const { firstName, email } = user;
     const verificationToken = jwt.sign(
@@ -2673,7 +2673,7 @@ const sendVerificationMail = async (user) => {
     };
 
     const encodedToken = base64UrlEncode(verificationToken);
-
+    console.log(encodedToken);
     // if (process.env.ENVIRONMENT !== "stage") {
     //   // Create sendEmail params
     //   var params = {
@@ -2719,7 +2719,6 @@ const sendVerificationMail = async (user) => {
         rejectUnauthorized: false,
       },
     });
-
     const msg = {
       to: email,
       from: process.env.MAIL_USER,
@@ -2729,7 +2728,9 @@ const sendVerificationMail = async (user) => {
         firstName,
         email,
         encodedToken,
-        liveUrl: process.env.CLIENT_URL,
+        liveUrl: isProxzeBusiness
+          ? process.env.PROXZE_BUSINESS_URL
+          : process.env.CLIENT_URL,
       }),
     };
 
@@ -2775,7 +2776,7 @@ const sendVerificationText = async (user) => {
 
 const sendResetMail = async (user) => {
   try {
-    const { firstName, email, _id } = user;
+    const { firstName, email, _id, userType, agency } = user;
 
     const resetToken = jwt.sign(
       { userId: _id },
@@ -2789,7 +2790,11 @@ const sendResetMail = async (user) => {
 
     const encodedToken = base64UrlEncode(resetToken);
 
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${encodedToken}`;
+    const baseUrl = agency
+      ? process.env.PROXZE_BUSINESS_URL
+      : process.env.CLIENT_URL;
+
+    const resetUrl = `${baseUrl}/reset-password/${encodedToken}`;
 
     let transporter = nodemailer.createTransport({
       host: "mail.proxze.com",
@@ -2980,6 +2985,145 @@ const sendRegistrationMail = async (user) => {
   }
 };
 
+const sendSubPrincipalRegistrationMail = async (user) => {
+  try {
+    const { email, superProxze } = user;
+    const registrationToken = jwt.sign(
+      { superProxze, email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+    const htmlData = await generateTemplate({
+      name: "register",
+      data: { encodedToken, email },
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Verify Your Email",
+      text: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.PROXZE_BUSINESS_URL}/register/sub/${registrationToken}`,
+      html: htmlData,
+    };
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve("Email sent");
+      });
+    });
+    // }
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
+const sendGroupRegistrationMail = async (user) => {
+  try {
+    const { email, group } = user;
+    const registrationToken = jwt.sign(
+      { group, email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+    console.log(registrationToken);
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+    const htmlData = await generateTemplate({
+      name: "register",
+      data: { encodedToken, email },
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Verify Your Email",
+      text: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.CLIENT_URL}/register/sub/${registrationToken}`,
+      html: htmlData,
+    };
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve("Email sent");
+      });
+    });
+    // }
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
+
+const generateRegistrationLink = async (groupIds) => {
+  try {
+    
+    const registrationToken = jwt.sign(
+      { groupIds},
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+   
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+
+    return {link:`https://${process.env.CLIENT_URL}/register/link/${encodedToken}`} 
+   
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
 module.exports = {
   createVerificationMail,
   sendMail,
@@ -2987,5 +3131,8 @@ module.exports = {
   sendRegistrationMail,
   sendResetMail,
   sendReregisterMail,
+  sendGroupRegistrationMail,
   sendVerificationText,
+  sendSubPrincipalRegistrationMail,
+  generateRegistrationLink
 };

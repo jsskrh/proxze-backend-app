@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
     },
     phoneToken: {
       type: String,
-      required: true,
+      // required: true,
     },
     phoneVerified: {
       type: Boolean,
@@ -181,7 +181,11 @@ const userSchema = new mongoose.Schema(
     },
     token: [{ type: String }],
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    superPrincipal: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+    group:{ type: mongoose.Schema.Types.ObjectId, ref: "Group" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    subPrincipals: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     superApproved: { type: Boolean },
     superRejected: { type: Boolean },
     superPerc: {
@@ -207,12 +211,14 @@ const userSchema = new mongoose.Schema(
         // default: [0, 0],
       },
     },
-    agency: { type: String },
-    serviceOffered: { type: String },
+
     noOfProxzes: { type: Number },
 
     // ----- PROXZE BUSINESS -----
+    agency: { type: String },
+    serviceOffered: { type: String },
     intendedProxy: { type: String },
+    areaOfOperation: { type: String },
     subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
   },
   { timestamps: true }

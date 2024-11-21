@@ -22,9 +22,12 @@ const taskCreator = async ({
   user,
   tier,
   organization,
+  group,
+  isProxzeBusiness,
+  request,
+  address,
   referralToken,
 }) => {
-  console.log(type, description, bill, location);
   const newTask = await Task.create({
     type,
     description,
@@ -33,7 +36,7 @@ const taskCreator = async ({
     // lga,
     // address,
     location: {
-      label: location.label,
+      label: location.label || address,
       geometry: {
         type: "Point",
         coordinates: [location.coords.lng, location.coords.lat],
@@ -54,6 +57,10 @@ const taskCreator = async ({
     rating: getAverageRating(user.reviews),
     timeline: [{ status: "created", timestamp: Date.now() }],
     tier: tier ?? "basic",
+    group,
+    isProxzeBusiness,
+    request,
+    address,
   });
 
   // const usersWithinRadius = await User.find({

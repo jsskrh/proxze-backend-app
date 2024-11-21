@@ -2,6 +2,7 @@ const User = require("../models/user");
 const Task = require("../models/task");
 const Nin = require("../models/nin");
 const Transaction = require("../models/transaction");
+const Permission = require("../models/business/permission");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
@@ -20,6 +21,7 @@ const {
   sendResetMail,
   sendReregisterMail,
   sendVerificationText,
+  sendSubPrincipalRegistrationMail,
 } = require("../utils/mail");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
@@ -72,12 +74,14 @@ const createUser = async (req, res) => {
 
       // ----- PROXZE BUSINESS -----
       areaOfOperation,
+      isProxzeBusiness,
       intendedProxy,
       subscription,
     } = req.body;
+
     if (
-      !firstName ||
-      !lastName ||
+      // !firstName ||
+      // !lastName ||
       !email ||
       !password ||
       !phoneNumber ||
@@ -128,15 +132,12 @@ const createUser = async (req, res) => {
       phoneToken: await generateUniquePhoneToken(),
     };
 
-    if (
-      userType !== "proxze" &&
-      userType !== "principal" &&
-      userType !== "super-proxze"
-    ) {
+    if (isProxzeBusiness) {
       // ----- PROXZE BUSINESS -----
       newUser.agency = agency;
       newUser.areaOfOperation = areaOfOperation;
       newUser.intendedProxy = intendedProxy;
+      newUser.serviceOffered = serviceOffered;
       newUser.subscription = subscription;
     }
 
@@ -161,7 +162,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    await sendVerificationMail(result);
+    await sendVerificationMail(result, isProxzeBusiness);
     // await verifyNin(result);
 
     await createLog({
@@ -275,6 +276,7 @@ const verifyEmail = async (req, res) => {
     return res.status(201).json({
       status: true,
       message: "Email verified successfully",
+      user,
     });
   } catch (err) {
     return res.status(400).json({
@@ -422,7 +424,6 @@ const testRoute = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-  console.log(req.body);
   const { email } = req.body;
 
   try {
@@ -626,7 +627,7 @@ const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const userDto = await User.findById(user._id).select(
-      "_id firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken phoneVerified"
+      "_id firstName lastName email agency serviceOffered areaOfOperation intendedProxy userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified subProxzes superProxze referralToken phoneVerified"
     );
     res.status(201).send(userDto.toObject());
   } catch (error) {
@@ -729,7 +730,18 @@ const updateUserInfo = async (req, res) => {
 
 const updateBasicInfo = async (req, res) => {
   // function to patch user data, firstName, lastName, NIN, email, phoneNumber
-  const { avatar, firstName, lastName, nin, email, phoneNumber } = req.body;
+  const {
+    firstName,
+    lastName,
+    nin,
+    email,
+    phoneNumber,
+    avatar,
+    agency,
+    serviceOffered,
+    areaOfOperation,
+    intendedProxy,
+  } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
@@ -760,38 +772,25 @@ const updateBasicInfo = async (req, res) => {
       user.phoneVerified = false;
     }
 
+    if (avatar) {
+      user.avatar = avatar;
+    }
+
+    if (agency) {
+      user.agency = agency;
+    }
+    if (serviceOffered) {
+      user.serviceOffered = serviceOffered;
+    }
+    if (areaOfOperation) {
+      user.areaOfOperation = areaOfOperation;
+    }
+    if (intendedProxy) {
+      user.intendedProxy = intendedProxy;
+    }
+
     await user.save();
 
-    const userData = {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      userType: user.userType,
-      bio: user.bio,
-      phoneNumber: user.phoneNumber,
-      address: user.address,
-      state: user.state,
-      country: user.country,
-      lga: user.lga,
-      balance: user.balance,
-      avatar: user.avatar,
-      nin: user.nin,
-      isVerified: user.isVerified,
-      ninVerified: user.ninVerified,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      paymentInfo: {
-        bank: user.paymentInfo?.bank,
-        accountName: user.paymentInfo?.accountName,
-        bankCode: user.paymentInfo?.bankCode,
-        accountNumber:
-          user.paymentInfo?.accountNumber &&
-          hideChars(user.paymentInfo?.accountNumber),
-      },
-      rating: getAverageRating(user.reviews),
-      postalCode: user.postalCode,
-    };
     const userDto = await User.findById(user._id).select(
       "_id avatar firstName lastName email userType ninData bio phoneNumber oplAddress resAddress location avatar balance paymentInfo isVerified"
     );
@@ -1234,6 +1233,36 @@ const getDashboard = async (req, res) => {
   }
 };
 
+const inviteSubprincipal = async (req, res) => {
+  const { group, proxy, class: className, email } = req.body;
+  try {
+    const principal = await User.findOnebyId({ _id: req.user.id });
+    const user = new User({
+      email: email,
+      userType: "sub-principal",
+      agency: principal.agency,
+      serviceOffered: principal.serviceOffered,
+      areaOfOperation: principal.areaOfOperation,
+      superPrincipal: principal._id,
+    });
+    const subPrincipal = await user.save();
+    const permission = new Permission({
+      group,
+      proxy,
+      class: Object.keys(className).filter((cls) => className[cls]),
+      principalId: req.user.id,
+      subPrincipalId: subPrincipal._id,
+    });
+    await permission.save();
+
+    await sendSubPrincipalRegistrationMail(subPrincipal);
+
+    res.status(201).json(permission);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   generateUniqueReferralToken,
   generateUniquePhoneToken,
@@ -1257,4 +1286,5 @@ module.exports = {
   subProxzeRegistration,
   sendPhoneVerificationToken,
   verifyPhone,
+  inviteSubprincipal,
 };

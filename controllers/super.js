@@ -24,7 +24,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const addProxze = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email} = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {

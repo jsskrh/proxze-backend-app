@@ -9,6 +9,18 @@ const groupSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    proxzes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    tasks: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Task",
+      },
+    ],
   },
   { timestamps: true }
 );

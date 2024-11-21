@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema(
       enum: ["verification", "oneToMany", "manyToOne", "manyToMany"],
     },
     description: { type: String, required: true, trim: true },
-    bill: { type: Number, required: true, trim: true },
+    bill: { type: Number, trim: true },
     // educationLevel: { type: String, required: true, trim: true },
     // isCertified: { type: Boolean, required: true, trim: true },
     // lga: { type: String, required: true, trim: true },
@@ -143,16 +143,30 @@ const taskSchema = new mongoose.Schema(
       },
     ],
     lastViewed: { type: Date, trim: true },
-    referralToken: { type: String, required: true },
+    referralToken: {
+      type: String,
+      // required: true
+    },
 
     // ----- PROXZE BUSINESS -----
+    isProxzeBusiness: { type: Boolean, default: false },
     title: { type: String },
+    address: { type: String },
     businessStatus: {
       type: String,
-      enum: ["rejected", "inProgress", "completed"],
+      enum: ["rejected", "created", "inProgress", "completed"],
+      default: "created",
     },
     image: { type: String },
     video: { type: String },
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+    },
+    request: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Request",
+    },
   },
   { timestamps: true }
 );

@@ -97,5 +97,6 @@ app.use("/business/requests", requestRoutes);
 app.use("/business/archives", archiveRoutes);
 app.use("/business/permissions", permissionRoutes);
 app.use("/business/subscriptions", subscriptionRoutes);
+app.use("/business/task", taskRoutes);
 
 module.exports = app;
