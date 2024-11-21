@@ -181,8 +181,11 @@ const userSchema = new mongoose.Schema(
     },
     token: [{ type: String }],
     superProxze: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
+    superPrincipal: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+    group:{ type: mongoose.Schema.Types.ObjectId, ref: "Group" },
     subProxzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    subPrincipals: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     superApproved: { type: Boolean },
     superRejected: { type: Boolean },
     superPerc: {
@@ -208,7 +211,7 @@ const userSchema = new mongoose.Schema(
         // default: [0, 0],
       },
     },
-   
+
     noOfProxzes: { type: Number },
 
     // ----- PROXZE BUSINESS -----

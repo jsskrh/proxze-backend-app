@@ -2,6 +2,7 @@ const User = require("../models/user");
 const Task = require("../models/task");
 const Nin = require("../models/nin");
 const Transaction = require("../models/transaction");
+const Permission = require("../models/business/permission");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
@@ -20,6 +21,7 @@ const {
   sendResetMail,
   sendReregisterMail,
   sendVerificationText,
+  sendSubPrincipalRegistrationMail,
 } = require("../utils/mail");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
@@ -1231,6 +1233,36 @@ const getDashboard = async (req, res) => {
   }
 };
 
+const inviteSubprincipal = async (req, res) => {
+  const { group, proxy, class: className, email } = req.body;
+  try {
+    const principal = await User.findOnebyId({ _id: req.user.id });
+    const user = new User({
+      email: email,
+      userType: "sub-principal",
+      agency: principal.agency,
+      serviceOffered: principal.serviceOffered,
+      areaOfOperation: principal.areaOfOperation,
+      superPrincipal: principal._id,
+    });
+    const subPrincipal = await user.save();
+    const permission = new Permission({
+      group,
+      proxy,
+      class: Object.keys(className).filter((cls) => className[cls]),
+      principalId: req.user.id,
+      subPrincipalId: subPrincipal._id,
+    });
+    await permission.save();
+
+    await sendSubPrincipalRegistrationMail(subPrincipal);
+
+    res.status(201).json(permission);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   generateUniqueReferralToken,
   generateUniquePhoneToken,
@@ -1254,4 +1286,5 @@ module.exports = {
   subProxzeRegistration,
   sendPhoneVerificationToken,
   verifyPhone,
+  inviteSubprincipal,
 };

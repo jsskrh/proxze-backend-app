@@ -20,7 +20,7 @@ const RequestSchema = new mongoose.Schema(
     },
     schedule: {
       type: String,
-      enum: ["daily","weekly", "monthly"],
+      enum: ["oneTime", "daily", "weekly", "monthly"],
       required: true,
     },
     image: { type: String },

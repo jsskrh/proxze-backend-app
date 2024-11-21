@@ -1,20 +1,6 @@
 const Permission = require("../../models/business/permission");
+const User = require("../../models/user");
 
-exports.createPermission = async (req, res) => {
-  const { group, proxy, class: className, principalId } = req.body;
-  try {
-    const permission = new Permission({
-      group,
-      proxy,
-      class: className,
-      principalId,
-    });
-    await permission.save();
-    res.status(201).json(permission);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
 
 exports.updatePermission = async (req, res) => {
   try {

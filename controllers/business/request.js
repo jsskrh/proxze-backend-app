@@ -19,6 +19,8 @@ exports.createRequest = async (req, res) => {
     class: className,
     schedule,
     tasks,
+    startDate,
+    endDate,
   } = req.body;
   try {
     const principal = await User.findById(principalId).populate({
@@ -41,27 +43,52 @@ exports.createRequest = async (req, res) => {
 
     const savedrequest = await request.save();
 
-    for (const task of JSON.parse(tasks)) {
-      const { lat, lng } = await getLatLng(task.address);
-      singleTask = {
+    if (tasks) {
+      for (const task of JSON.parse(tasks)) {
+        const { lat, lng } = await getLatLng(task.address);
+        singleTask = {
+          type: type,
+          description: task.description,
+          principal: principalId,
+          group: groupId,
+          request: savedrequest._id,
+          startDate: task.startDate,
+          endDate: task.endDate,
+          address: task.address,
+          location: {
+            coords: {
+              lat,
+              lng,
+            },
+          },
+          isProxzeBusiness: true,
+          user: principal,
+        };
+        await taskCreator(singleTask);
+      }
+    } else {
+      const { lat, lng } = await getLatLng(tag);
+      const task = {
         type: type,
-        description: task.description,
+        description: description,
         principal: principalId,
         group: groupId,
         request: savedrequest._id,
-        startDate: task.startDate,
-        endDate: task.endDate,
-        address: task.address,
+        tag,
+        address: tag,
         location: {
           coords: {
             lat,
             lng,
           },
         },
+        startDate,
+        endDate,
         isProxzeBusiness: true,
         user: principal,
       };
-      await taskCreator(singleTask);
+
+      await taskCreator(task);
     }
 
     res.status(201).json(request);
@@ -111,10 +138,39 @@ exports.getTasksByRequestId = async (req, res) => {
 
 exports.getAllRequestsByPrincipalId = async (req, res) => {
   try {
-    const requests = await Request.find({
-      principalId: req.params.principalId,
+    const { principalId } = req.params;
+    const { page = 1, perPage = 15, search = "", sort = "desc" } = req.query;
+
+    const query = {
+      principalId,
+      title: { $regex: search, $options: "i" },
+    };
+
+    const totalCount = await Request.countDocuments(query);
+
+    const requests = await Request.find(query)
+      .populate({
+        path: "groupId",
+        select: "name",
+      })
+      .sort({ createdAt: sort === "asc" ? 1 : -1 })
+      .skip((page - 1) * perPage)
+      .limit(parseInt(perPage));
+
+    const formattedRequests = requests.map((request) => {
+      const { groupId, ...rest } = request.toObject();
+      return {
+        ...rest,
+        groupName: groupId?.name || null,
+      };
     });
-    res.json(requests);
+
+    res.json({
+      requests: formattedRequests,
+      count: totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / perPage),
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

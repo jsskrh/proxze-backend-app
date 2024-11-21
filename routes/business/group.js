@@ -8,6 +8,7 @@ router.delete("/:id", Group.deleteGroup);
 router.get("/:id", Group.getGroupById);
 router.get("/principal/:principalId", Group.getAllGroupsByPrincipalId);
 router.post("/proxze/addProxze", Group.addSingleProxzeToGroup);
+router.post("/link", Group.generateInviteLink);
 router.post("/proxze/addBulkProxze", Group.addBulkProxzeToGroup);
 router.get("/group/proxze", Group.getGroupProxzes);
 

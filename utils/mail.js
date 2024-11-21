@@ -2985,6 +2985,63 @@ const sendRegistrationMail = async (user) => {
   }
 };
 
+const sendSubPrincipalRegistrationMail = async (user) => {
+  try {
+    const { email, superProxze } = user;
+    const registrationToken = jwt.sign(
+      { superProxze, email },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+    const htmlData = await generateTemplate({
+      name: "register",
+      data: { encodedToken, email },
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "mail.proxze.com",
+      port: 465,
+      secure: true, // use TLS
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+      tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false,
+      },
+    });
+
+    const msg = {
+      to: email,
+      from: process.env.MAIL_USER,
+      subject: "Verify Your Email",
+      text: `Dear User, You're almost set to start using Proxze. Please click on the button below to register: https://${process.env.PROXZE_BUSINESS_URL}/register/sub/${registrationToken}`,
+      html: htmlData,
+    };
+
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(msg, (err, info) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve("Email sent");
+      });
+    });
+    // }
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
 const sendGroupRegistrationMail = async (user) => {
   try {
     const { email, group } = user;
@@ -3042,6 +3099,31 @@ const sendGroupRegistrationMail = async (user) => {
   }
 };
 
+
+const generateRegistrationLink = async (groupIds) => {
+  try {
+    
+    const registrationToken = jwt.sign(
+      { groupIds},
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+   
+    const base64UrlEncode = (input) => {
+      return input.replace(/\./g, "(");
+    };
+
+    const encodedToken = base64UrlEncode(registrationToken);
+
+
+    return {link:`https://${process.env.CLIENT_URL}/register/link/${encodedToken}`} 
+   
+  } catch (error) {
+    console.log(err);
+    return;
+  }
+};
+
 module.exports = {
   createVerificationMail,
   sendMail,
@@ -3051,4 +3133,6 @@ module.exports = {
   sendReregisterMail,
   sendGroupRegistrationMail,
   sendVerificationText,
+  sendSubPrincipalRegistrationMail,
+  generateRegistrationLink
 };
